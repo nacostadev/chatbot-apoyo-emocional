@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Inteligente de Evaluación Psicoemocional - UCV 2026</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+
+    <div class="app-container" id="appContainer">
+
+        <header class="app-topbar" id="appTopbar">
+            <button type="button" class="btn-menu-toggle" id="btnMenuToggle" aria-label="Abrir menú">
+                <i data-lucide="menu"></i>
+            </button>
+            <div class="topbar-brand">
+                <div class="topbar-avatar">
+                    <i data-lucide="brain-circuit"></i>
+                </div>
+                <span>Sistema de Apoyo Emocional</span>
+            </div>
+        </header>
+
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <div class="app-body">
+
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-header">
+                    <div class="brand-wrapper">
+                        <div class="brand-icon bot-pulse">
+                            <i data-lucide="brain-circuit"></i>
+                        </div>
+                        <div class="brand-text">
+                            <h1>Sistema de Apoyo Emocional</h1>
+                            <p>Plataforma UCV</p>
+                        </div>
+                        <button type="button" class="btn-sidebar-close" id="btnSidebarClose" aria-label="Cerrar menú">
+                            <i data-lucide="x"></i>
+                        </button>
+                    </div>
+                    <div class="ods-badge">
+                        <p class="ods-title">ODS 3: Salud y Bienestar</p>
+                        <p class="ods-desc">Diagnóstico Psicoemocional</p>
+                    </div>
+                </div>
+
+                <nav class="sidebar-nav">
+                    <button class="nav-item active">
+                        <i data-lucide="message-square-heart"></i>
+                        <span>Chatbot de Diagnóstico</span>
+                    </button>
+                </nav>
+
+                <div class="sidebar-footer">
+                    <p>Investigación Académica VII Ciclo</p>
+                    <p class="copyright">Universidad César Vallejo &copy; 2026</p>
+                </div>
+            </aside>
+
+            <section class="progress-panel">
+                <div class="panel-header">
+                    <h2>Flujo de Tamizaje</h2>
+                    <p>Sigue los pasos interactivos para calcular tus niveles acumulados.</p>
+                </div>
+
+                <div class="steps-container">
+                    <h3 class="steps-title">Etapas del Proceso</h3>
+                    <div class="step-item" id="step-consent">
+                        <span class="step-badge" id="badge-consent">1</span>
+                        <span class="step-text">Consentimiento de Identidad</span>
+                    </div>
+                    <div class="step-item" id="step-identificacion">
+                        <span class="step-badge" id="badge-identificacion">2</span>
+                        <span class="step-text">Datos del Alumno</span>
+                    </div>
+                    <div class="step-item" id="step-facultad">
+                        <span class="step-badge" id="badge-facultad">3</span>
+                        <span class="step-text">Selección de Facultad</span>
+                    </div>
+                    <div class="step-item" id="step-eval">
+                        <span class="step-badge" id="badge-eval">4</span>
+                        <span class="step-text">Reactivos del Test</span>
+                    </div>
+                </div>
+
+                <div class="panel-footer">
+                    <i data-lucide="activity"></i>
+                    <span>Estado del Motor: <b>Listo</b></span>
+                </div>
+            </section>
+
+            <section class="chat-area">
+                <div class="chat-header">
+                    <div class="bot-info">
+                        <div class="bot-avatar">
+                            <i data-lucide="bot"></i>
+                            <span class="status-indicator"></span>
+                        </div>
+                        <div class="bot-title">
+                            <h3>PsiBot Inteligente</h3>
+                            <p>Tamizaje y Reporte Clínico Automático</p>
+                        </div>
+                    </div>
+                    <button onclick="reiniciarChat()" class="btn-reset">
+                        <i data-lucide="refresh-cw"></i>
+                        <span>Reiniciar</span>
+                    </button>
+                </div>
+
+                <div id="chat-messages" class="chat-messages"></div>
+
+                <div class="chat-footer">
+                    <div id="chat-controls" class="chat-controls-wrapper">
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <div id="modalSatisfaccion" class="modal-backdrop-custom" style="display: none;">
+        <div class="modal-content-custom">
+            <div class="modal-header-custom">
+                <i data-lucide="heart-handshake" style="color: #0d9488; width: 32px; height: 32px;"></i>
+                <h3>Evaluación de Satisfacción</h3>
+                <p>Tu opinión nos ayuda a validar la usabilidad y efectividad del sistema inteligente.</p>
+            </div>
+
+            <div class="modal-body-custom">
+                <label class="label-modal">1. ¿Cómo calificas la claridad y entendimiento de las preguntas
+                    planteadas?</label>
+                <div class="rating-group" id="ratingClaridad">
+                    <button type="button" class="btn-star" data-value="1">★</button>
+                    <button type="button" class="btn-star" data-value="2">★</button>
+                    <button type="button" class="btn-star" data-value="3">★</button>
+                    <button type="button" class="btn-star" data-value="4">★</button>
+                    <button type="button" class="btn-star" data-value="5">★</button>
+                </div>
+
+                <label class="label-modal" style="margin-top: 15px;">2. ¿Qué tan acertado o coherente sentiste el
+                    feedback e interacción del bot?</label>
+                <div class="rating-group" id="ratingCoherencia">
+                    <button type="button" class="btn-star" data-value="1">★</button>
+                    <button type="button" class="btn-star" data-value="2">★</button>
+                    <button type="button" class="btn-star" data-value="3">★</button>
+                    <button type="button" class="btn-star" data-value="4">★</button>
+                    <button type="button" class="btn-star" data-value="5">★</button>
+                </div>
+
+                <label class="label-modal" style="margin-top: 15px;">3. Déjanos un comentario o sugerencia opcional
+                    sobre tu experiencia:</label>
+                <textarea id="txtComentarioSatisfaccion"
+                    placeholder="Escribe aquí tus sugerencias para mejorar el sistema..."
+                    class="textarea-modal"></textarea>
+            </div>
+
+            <div class="modal-footer-custom">
+                <button onclick="enviarSatisfaccionSheets()" class="btn-modal-submit">Enviar Evaluación y
+                    Finalizar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        (function () {
+            const appContainer = document.getElementById('appContainer');
+            const btnMenuToggle = document.getElementById('btnMenuToggle');
+            const btnSidebarClose = document.getElementById('btnSidebarClose');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+            function openSidebar() {
+                appContainer.classList.add('sidebar-open');
+            }
+
+            function closeSidebar() {
+                appContainer.classList.remove('sidebar-open');
+            }
+
+            btnMenuToggle.addEventListener('click', openSidebar);
+            btnSidebarClose.addEventListener('click', closeSidebar);
+            sidebarOverlay.addEventListener('click', closeSidebar);
+
+            document.querySelectorAll('.sidebar .nav-item').forEach(function (item) {
+                item.addEventListener('click', closeSidebar);
+            });
+
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+        })();
+    </script>
+</body>
+
+</html>
