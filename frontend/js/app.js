@@ -79,8 +79,7 @@ async function ejecutarFlujo() {
             if (estadoChat.indicePreguntaIA === 0 && !estadoChat.preguntaActualBot) {
                 controls.innerHTML = `<div style="text-align:center; color:#0d9488; font-size:0.8rem; font-weight:600;">⏳ Conectando...</div>`;
                 try {
-                    const response = await fetch("http://localhost:8000/primera-pregunta");
-                    const dataInit = await response.json();
+                    const response = await fetch("https://chatbot-apoyo-emocional.onrender.com/primera-pregunta"); const dataInit = await response.json();
                     estadoChat.preguntaActualBot = dataInit.pregunta;
                     estadoChat.categoriaActualBot = dataInit.categoria;
                     estadoChat.tipoPreguntaActualBot = dataInit.tipo;
@@ -316,7 +315,7 @@ function generarReporteClinicoHtml() {
     let severidad = estadoChat.nivelAlertaIA || "Bajo";
     let claseRiesgo = "low";
     let labelRiesgo = "Estable / Buen estado";
-    
+
     if (severidad === "Moderado") {
         claseRiesgo = "mod";
         labelRiesgo = "Estado Moderado";
@@ -436,7 +435,7 @@ function generarReporteClinicoHtml() {
                         legend: { display: false },
                         tooltip: {
                             callbacks: {
-                                label: function(context) { return ` ${context.parsed.y}%`; }
+                                label: function (context) { return ` ${context.parsed.y}%`; }
                             }
                         }
                     },
@@ -446,7 +445,7 @@ function generarReporteClinicoHtml() {
                             max: 100,
                             ticks: {
                                 stepSize: 25,
-                                callback: function(value) { return value + '%'; },
+                                callback: function (value) { return value + '%'; },
                                 font: { size: 10, weight: '500' }
                             },
                             grid: { color: '#f1f5f9' }
@@ -657,7 +656,7 @@ async function guardarResultadosEnBackend() {
 function modalSatisfaccion() {
     const modal = document.getElementById("modalSatisfaccion");
     if (modal) {
-        modal.style.display = "flex"; 
+        modal.style.display = "flex";
     } else {
         console.error("No se encontró el contenedor modalSatisfaccion en el DOM.");
     }
@@ -728,7 +727,7 @@ function mostrarToastFeedback() {
             </div>
         </div>
     `;
-    
+
     if (typeof lucide !== 'undefined') lucide.createIcons();
 
     setTimeout(() => {
