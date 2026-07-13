@@ -158,7 +158,7 @@ async function avanzarTurnoAPI(valorEnviado) {
     controls.innerHTML = `<div style="text-align:center; color:#0d9488; font-size:0.8rem; font-weight:600;">⏳ Sincronizando flujo predictivo...</div>`;
 
     try {
-        const res = await fetch("http://localhost:8000/procesar-turno", {
+        const res = await fetch("https://chatbot-apoyo-emocional.onrender.com/procesar-turno", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -195,7 +195,7 @@ async function procesarDiagnosticoFinalNLP() {
     controls.innerHTML = `<div style="text-align:center; color:#0d9488; font-size:0.8rem; font-weight:600;">🧠 Sintetizando evaluación clínica multivariable...</div>`;
 
     try {
-        const res = await fetch("http://localhost:8000/diagnostico-final", {
+        const res = await fetch("https://chatbot-apoyo-emocional.onrender.com/diagnostico-final", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
