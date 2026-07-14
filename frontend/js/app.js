@@ -389,13 +389,13 @@ function generarReporteClinicoHtml() {
     // Colores basados en el diseño de la imagen adjunta
     const getColorBarra = (val) => val > 70 ? '#ef4444' : (val > 35 ? '#f59e0b' : '#10b981');
     const getColorEficacia = (val) => val < 40 ? '#ef4444' : (val < 70 ? '#f59e0b' : '#10b981');
+    // <div style="margin-bottom: 20px;">
+    //     <p style="color: #94a3b8; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; margin: 0 0 4px 0; letter-spacing: 0.05em;">ANÁLISIS CONVERSACIONAL MIXTO – UCV</p>
+    //     <h2 style="color: #1e293b; margin: 0; font-size: 1.05rem; font-weight: 800; letter-spacing: -0.01em;">Informe Psicoemocional vía Redes Neuronales NLP</h2>
+    // </div>
 
     let html = `
     <div style="font-family: 'Plus Jakarta Sans', sans-serif;">
-        <div style="margin-bottom: 20px;">
-            <p style="color: #94a3b8; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; margin: 0 0 4px 0; letter-spacing: 0.05em;">ANÁLISIS CONVERSACIONAL MIXTO – UCV</p>
-            <h2 style="color: #1e293b; margin: 0; font-size: 1.05rem; font-weight: 800; letter-spacing: -0.01em;">Informe Psicoemocional vía Redes Neuronales NLP</h2>
-        </div>
 
         <div style="background: #f8fafc; border-radius: 12px; padding: 12px 18px; margin-bottom: 20px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; border: 1px solid #f1f5f9;">
             <div style="font-size: 0.8rem;"><span style="color: #64748b;">Estudiante:</span> <strong style="color: #334155;">${estadoChat.nombreEstudiante}</strong></div>
