@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ficha e Investigadores - UCV 2026</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+        <script src="/frontend/js/metricas.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        
+        body {
+            background-color: #F8FAFC;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Estilos de navegación originales */
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 0.375rem;
+            margin-top: 0.5rem;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 0.75rem;
+            color: #94a3b8;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .nav-item:hover {
+            background-color: rgba(30, 41, 59, 0.5);
+            color: #f8fafc;
+        }
+        
+        .nav-item.active {
+            background-color: #1e293b;
+            color: #2dd4bf;
+            border: 1px solid rgba(51, 65, 85, 0.5);
+            font-weight: 700;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+        }
+
+        .nav-item svg {
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+
+        .bento-card {
+            background: #ffffff;
+            border-radius: 1.25rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+    </style>
+</head>
+<body class="text-slate-800 h-screen w-full overflow-hidden flex">
+
+    <aside class="w-[260px] bg-[#0F172A] text-slate-300 hidden md:flex flex-col justify-between h-full flex-shrink-0 z-20">
+        <div class="p-6 flex flex-col gap-6">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center shrink-0">
+                    <i data-lucide="brain-circuit" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-white font-bold text-sm leading-tight">Sistema de Apoyo<br>Emocional</h1>
+                    <p class="text-[10px] text-slate-400 mt-0.5">Plataforma UCV</p>
+                </div>
+            </div>
+
+            <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
+                <p class="text-[9px] font-bold text-teal-400 tracking-wide uppercase mb-1">ODS 3: SALUD Y BIENESTAR</p>
+                <p class="text-xs font-medium text-slate-300">Diagnóstico Psicoemocional</p>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="/frontend/index.html" class="nav-item" style="text-decoration: none;">
+                    <i data-lucide="message-square-heart"></i>
+                    <span>Chatbot de Diagnóstico</span>
+                </a>
+                <a href="/frontend/pages/metricas.html" class="nav-item" style="text-decoration: none;">
+                    <i data-lucide="bar-chart-3"></i>
+                    <span>Métricas del Proyecto</span>
+                </a>
+                <a href="/frontend/pages/ficha.html" class="nav-item active" style="text-decoration: none;">
+                    <i data-lucide="users-round"></i>
+                    <span>Ficha e Investigadores</span>
+                </a>
+            </nav>
+        </div>
+
+        <div class="p-6 text-[10px] text-slate-500 font-medium">
+            <p class="mb-1">Investigación Académica VII Ciclo</p>
+            <p>Universidad César Vallejo &copy; 2026</p>
+        </div>
+    </aside>
+
+    <main class="flex-1 h-full p-5 lg:p-8 pb-3 flex flex-col min-w-0">
+        
+        <div class="grid grid-cols-3 grid-rows-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1.5fr)] gap-5 h-full max-w-[1200px] mx-auto w-full">
+
+            <div class="bento-card col-span-2 p-6 justify-center">
+                <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 text-[10px] font-bold tracking-wide uppercase mb-4 border border-indigo-100 self-start">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i> Investigación Formativa III
+                </div>
+                
+                <h2 class="text-2xl lg:text-[32px] font-extrabold text-slate-900 leading-tight mb-5 max-w-xl">
+                    Sistema inteligente y su efecto en la evaluación del riesgo psicoemocional
+                </h2>
+                
+                <div class="flex items-center gap-1.5 text-slate-500 text-xs font-medium mt-auto">
+                    <i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400"></i>
+                    Estudiantes universitarios, Trujillo, 2026
+                </div>
+            </div>
+
+            <div class="bento-card col-span-1 bg-[#0F172A] border-none text-white p-6 justify-center">
+                <div class="absolute -right-8 -top-8 w-32 h-32 bg-indigo-500/20 rounded-full blur-2xl pointer-events-none"></div>
+                
+                <div class="flex-1 flex flex-col justify-center">
+                    <div class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center border border-white/20 mb-4">
+                        <i data-lucide="award" class="w-4 h-4 text-indigo-300"></i>
+                    </div>
+                    <p class="text-[9px] font-bold text-indigo-300 uppercase tracking-widest mb-1.5">Asesor Principal</p>
+                    <h3 class="text-lg font-bold text-white leading-tight mb-1">Dr. Jorge Luis Gutiérrez Gutiérrez</h3>
+                    <p class="text-indigo-200/60 text-[10px] font-medium">Universidad César Vallejo - Sede Trujillo</p>
+                </div>
+
+                <a href="https://orcid.org/0000-0002-4989-1196" target="_blank" class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-[11px] font-bold transition-colors border border-white/10 mt-4 relative z-10" style="text-decoration: none;">
+                    <i data-lucide="link" class="w-3.5 h-3.5"></i> Perfil ORCID
+                </a>
+            </div>
+
+            <div class="bento-card p-5 justify-center">
+                <div class="w-7 h-7 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-3">
+                    <i data-lucide="network" class="w-3.5 h-3.5"></i>
+                </div>
+                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Línea de Investigación</p>
+                <p class="text-sm font-bold text-slate-800 leading-tight">Sistemas de Información y Comunicación</p>
+            </div>
+
+            <div class="bento-card p-5 justify-center">
+                <div class="w-7 h-7 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3">
+                    <i data-lucide="leaf" class="w-3.5 h-3.5"></i>
+                </div>
+                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Línea de RSU</p>
+                <p class="text-sm font-bold text-slate-800 leading-tight">Promoción de la salud y nutrición</p>
+            </div>
+
+            <div class="bento-card p-5 bg-emerald-50/30 border-emerald-100 justify-center">
+                <h3 class="text-xs font-bold text-emerald-800 flex items-center gap-1.5 mb-3">
+                    <i data-lucide="phone" class="w-3.5 h-3.5"></i> Directorio de Apoyo
+                </h3>
+                
+                <div class="flex flex-col gap-2">
+                    <a href="https://campusvirtual.ucv.edu.pe/" target="_blank" class="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-emerald-100/60 hover:bg-emerald-100/50 transition-colors cursor-pointer group" style="text-decoration: none;">
+                        <span class="text-[11px] font-bold text-slate-700 flex items-center gap-1.5 group-hover:text-emerald-800 transition-colors">
+                            Psicología UCV
+                        </span>
+                        <span class="text-[9px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded-md flex items-center gap-1">
+                            Campus Virtual <i data-lucide="external-link" class="w-2.5 h-2.5"></i>
+                        </span>
+                    </a>
+                    
+                    <a href="tel:113" class="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-emerald-100/60 hover:bg-emerald-100/50 transition-colors cursor-pointer group" style="text-decoration: none;">
+                        <span class="text-[11px] font-bold text-slate-700 flex items-center gap-1.5 group-hover:text-emerald-800 transition-colors">
+                            MINSA (24/7)
+                        </span>
+                        <span class="text-[9px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded-md flex items-center gap-1">
+                            113 (Opc. 5) <i data-lucide="phone-call" class="w-2.5 h-2.5"></i>
+                        </span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="bento-card col-span-3 p-6 justify-center">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900 leading-tight">Equipo de Investigadores</h3>
+                        <p class="text-[11px] text-slate-500 mt-0.5">VII Ciclo - Ingeniería de Sistemas UCV</p>
+                    </div>
+                    <div class="flex -space-x-1.5">
+                        <div class="w-7 h-7 rounded-full bg-pink-500 border-2 border-white flex items-center justify-center text-[8px] text-white font-bold">AP</div>
+                        <div class="w-7 h-7 rounded-full bg-violet-500 border-2 border-white flex items-center justify-center text-[8px] text-white font-bold">CM</div>
+                        <div class="w-7 h-7 rounded-full bg-amber-500 border-2 border-white flex items-center justify-center text-[8px] text-white font-bold">MS</div>
+                        <div class="w-7 h-7 rounded-full bg-blue-500 border-2 border-white flex items-center justify-center text-[8px] text-white font-bold">MA</div>
+                        <div class="w-7 h-7 rounded-full bg-teal-500 border-2 border-white flex items-center justify-center text-[8px] text-white font-bold">RL</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-5 gap-4">
+                    <div class="flex flex-col gap-1.5">
+                        <div class="w-10 h-10 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center text-sm font-extrabold mb-1">AP</div>
+                        <h4 class="font-bold text-slate-800 text-[11px] leading-tight">Acosta Plasencia,<br>Naylin A.</h4>
+                        <a href="https://orcid.org/0009-0000-9020-7045" target="_blank" class="text-[10px] font-semibold text-indigo-500 hover:text-indigo-700 flex items-center gap-1 mt-auto" style="text-decoration: none;">
+                            <i data-lucide="link" class="w-3 h-3"></i> ORCID
+                        </a>
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <div class="w-10 h-10 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center text-sm font-extrabold mb-1">CM</div>
+                        <h4 class="font-bold text-slate-800 text-[11px] leading-tight">Chuquipoma M.,<br>Sthefany D.</h4>
+                        <a href="https://orcid.org/0009-0006-7594-5529" target="_blank" class="text-[10px] font-semibold text-indigo-500 hover:text-indigo-700 flex items-center gap-1 mt-auto" style="text-decoration: none;">
+                            <i data-lucide="link" class="w-3 h-3"></i> ORCID
+                        </a>
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <div class="w-10 h-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-sm font-extrabold mb-1">MS</div>
+                        <h4 class="font-bold text-slate-800 text-[11px] leading-tight">Mantilla Sánchez,<br>Elsa L.</h4>
+                        <a href="https://orcid.org/0009-0009-9931-3181" target="_blank" class="text-[10px] font-semibold text-indigo-500 hover:text-indigo-700 flex items-center gap-1 mt-auto" style="text-decoration: none;">
+                            <i data-lucide="link" class="w-3 h-3"></i> ORCID
+                        </a>
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-extrabold mb-1">MA</div>
+                        <h4 class="font-bold text-slate-800 text-[11px] leading-tight">Mozo Avalos,<br>José A.</h4>
+                        <a href="https://orcid.org/0009-0001-3885-3629" target="_blank" class="text-[10px] font-semibold text-indigo-500 hover:text-indigo-700 flex items-center gap-1 mt-auto" style="text-decoration: none;">
+                            <i data-lucide="link" class="w-3 h-3"></i> ORCID
+                        </a>
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <div class="w-10 h-10 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center text-sm font-extrabold mb-1">RL</div>
+                        <h4 class="font-bold text-slate-800 text-[11px] leading-tight">Robles Loje,<br>Ernesto J.</h4>
+                        <a href="https://orcid.org/0009-0006-2859-7453" target="_blank" class="text-[10px] font-semibold text-indigo-500 hover:text-indigo-700 flex items-center gap-1 mt-auto" style="text-decoration: none;">
+                            <i data-lucide="link" class="w-3 h-3"></i> ORCID
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </div> 
+        
+        <footer class="mt-4 text-center text-[10px] text-slate-400 font-medium">
+            UCV &copy; 2026 - Investigación Académica VII Ciclo
+        </footer>
+    </main>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>

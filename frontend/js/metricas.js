@@ -36,11 +36,15 @@ function renderizarMetricasDashboard(data) {
     if (n > 0) {
         const promAnsiedad = promedio(diagnosticos.map(d => Number(d.Score_Ansiedad) || 0));
         const promEstres = promedio(diagnosticos.map(d => Number(d.Score_Estres) || 0));
-        const promBurnout = promedio(diagnosticos.map(d => Number(d.Score_Burnout) || 0));
+        const promAgotamiento = promedio(diagnosticos.map(d => Number(d.Score_Agotamiento) || 0));
+        const promCinismo = promedio(diagnosticos.map(d => Number(d.Score_Cinismo) || 0));
+        const promEficacia = promedio(diagnosticos.map(d => Number(d.Score_Eficacia) || 0));
 
         setTexto('kpiAnsiedad', Math.round(promAnsiedad) + '%');
         setTexto('kpiEstres', Math.round(promEstres) + '%');
-        setTexto('kpiBurnout', Math.round(promBurnout) + '%');
+        setTexto('kpiAgotamiento', Math.round(promAgotamiento) + '%');
+        setTexto('kpiCinismo', Math.round(promCinismo) + '%');
+        setTexto('kpiEficacia', Math.round(promEficacia) + '%');
     }
 
     if (satisfacciones.length > 0) {
@@ -71,7 +75,9 @@ function setTexto(id, valor) {
 const camposPorCategoria = {
     ansiedad: 'Score_Ansiedad',
     estres: 'Score_Estres',
-    burnout: 'Score_Burnout'
+    agotamiento: 'Score_Agotamiento',
+    cinismo: 'Score_Cinismo',
+    eficacia: 'Score_Eficacia'
 };
 
 function actualizarGraficoRiesgo(categoria) {
@@ -92,7 +98,10 @@ function actualizarGraficoRiesgo(categoria) {
 
     let alto = 0, moderado = 0, bajo = 0;
     ultimosDiagnosticos.forEach(d => {
-        const val = Number(d[campo]) || 0;
+        let val = Number(d[campo]) || 0;
+        // Eficacia se interpreta al revés: un puntaje bajo es la señal de riesgo
+        if (categoria === 'eficacia') val = 100 - val;
+
         if (val >= 60) alto++;
         else if (val >= 35) moderado++;
         else bajo++;

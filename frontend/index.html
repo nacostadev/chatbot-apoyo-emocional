@@ -6,28 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema Inteligente de Evaluación Psicoemocional - UCV 2026</title>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            50: '#f0fdfa',
-                            100: '#ccfbf1',
-                            300: '#5eead4',
-                            400: '#2dd4bf',
-                            600: '#0d9488',
-                            700: '#0f766e'
-                        },
-                        slate: {
-                            850: '#172136'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+
     <link rel="stylesheet" href="css/styles.css">
 </head>
 
@@ -35,7 +14,6 @@
 
     <div class="app-container" id="appContainer">
 
-        <!-- Barra Superior Móvil -->
         <header class="app-topbar" id="appTopbar">
             <button type="button" class="btn-menu-toggle" id="btnMenuToggle" aria-label="Abrir menú">
                 <i data-lucide="menu"></i>
@@ -51,7 +29,7 @@
         <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
         <div class="app-body">
-            <!-- Menú Lateral Izquierdo -->
+
             <aside class="sidebar" id="sidebar">
                 <div class="sidebar-header">
                     <div class="brand-wrapper">
@@ -71,15 +49,18 @@
                         <p class="ods-desc">Diagnóstico Psicoemocional</p>
                     </div>
                 </div>
-
                 <nav class="sidebar-nav">
-                    <a href="index.html" class="nav-item active">
+                    <a href="/frontend/index.html" class="nav-item active" style="text-decoration: none;">
                         <i data-lucide="message-square-heart"></i>
                         <span>Chatbot de Diagnóstico</span>
                     </a>
-                    <a href="pages/metricas.html" class="nav-item">
+                    <a href="pages/metricas.html" class="nav-item" style="text-decoration: none;">
                         <i data-lucide="bar-chart-3"></i>
                         <span>Métricas del Proyecto</span>
+                    </a>
+                    <a href="pages/ficha.html" class="nav-item" style="text-decoration: none;">
+                        <i data-lucide="users-round"></i>
+                        <span>Ficha e Investigadores</span>
                     </a>
                 </nav>
 
@@ -89,8 +70,8 @@
                 </div>
             </aside>
 
-            <!-- CONTENIDO PRINCIPAL: CHATBOT -->
-            <div id="tab-chat" class="app-tab flex w-full">
+            <!-- CHATBOT -->
+            <div id="tab-chat" class="app-tab" style="display:contents;">
 
                 <section class="progress-panel">
                     <div class="panel-header">
@@ -145,19 +126,20 @@
                     <div id="chat-messages" class="chat-messages"></div>
 
                     <div class="chat-footer">
-                        <div id="chat-controls" class="chat-controls-wrapper"></div>
+                        <div id="chat-controls" class="chat-controls-wrapper">
+                        </div>
                     </div>
                 </section>
 
             </div>
+
         </div>
     </div>
 
-    <!-- Modal de Satisfacción -->
     <div id="modalSatisfaccion" class="modal-backdrop-custom" style="display: none;">
         <div class="modal-content-custom">
             <div class="modal-header-custom">
-                <i data-lucide="heart-handshake" class="text-brand-600 w-8 h-8"></i>
+                <i data-lucide="heart-handshake" style="color: #0d9488; width: 32px; height: 32px;"></i>
                 <h3>Evaluación de Satisfacción</h3>
                 <p>Tu opinión nos ayuda a validar la usabilidad y efectividad del sistema inteligente.</p>
             </div>
@@ -185,7 +167,8 @@
 
                 <label class="label-modal" style="margin-top: 15px;">3. Déjanos un comentario o sugerencia opcional
                     sobre tu experiencia:</label>
-                <textarea id="txtComentarioSatisfaccion" placeholder="Escribe aquí tus sugerencias..."
+                <textarea id="txtComentarioSatisfaccion"
+                    placeholder="Escribe aquí tus sugerencias para mejorar el sistema..."
                     class="textarea-modal"></textarea>
             </div>
 
@@ -196,23 +179,34 @@
         </div>
     </div>
 
-    <script src="js/app.js"></script>
+    <script src="./js/app.js"></script>
     <script>
-            (function () {
-                const appContainer = document.getElementById('appContainer');
-                const btnMenuToggle = document.getElementById('btnMenuToggle');
-                const btnSidebarClose = document.getElementById('btnSidebarClose');
-                const sidebarOverlay = document.getElementById('sidebarOverlay');
+        (function () {
+            const appContainer = document.getElementById('appContainer');
+            const btnMenuToggle = document.getElementById('btnMenuToggle');
+            const btnSidebarClose = document.getElementById('btnSidebarClose');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
 
-                function openSidebar() { appContainer.classList.add('sidebar-open'); }
-                function closeSidebar() { appContainer.classList.remove('sidebar-open'); }
+            function openSidebar() {
+                appContainer.classList.add('sidebar-open');
+            }
 
-                btnMenuToggle.addEventListener('click', openSidebar);
-                btnSidebarClose.addEventListener('click', closeSidebar);
-                sidebarOverlay.addEventListener('click', closeSidebar);
+            function closeSidebar() {
+                appContainer.classList.remove('sidebar-open');
+            }
 
-                if (window.lucide) { lucide.createIcons(); }
-            })();
+            btnMenuToggle.addEventListener('click', openSidebar);
+            btnSidebarClose.addEventListener('click', closeSidebar);
+            sidebarOverlay.addEventListener('click', closeSidebar);
+
+            document.querySelectorAll('.sidebar .nav-item').forEach(function (item) {
+                item.addEventListener('click', closeSidebar);
+            });
+
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+        })();
     </script>
 </body>
 
