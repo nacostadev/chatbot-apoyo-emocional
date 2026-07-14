@@ -24,16 +24,16 @@ except ModuleNotFoundError:
 
 app = FastAPI(title="API UCV - Sistema Inteligente de Evaluación Psicoemocional")
 
+# Configuración de CORS con soporte explícito para localhost y pruebas locales
 app.add_middleware(
     CORSMiddleware,
-    # allow_origins=[
-    #     "http://localhost:8000",
-    #     "http://127.0.0.1:8000",
-    #     "http://localhost:5500", 
-    #     "http://127.0.0.1:5500",
-    #     "*"                       
-    # ],
-    allow_origins=["https://chatbot-apoyo-emocional.onrender.com","*"],
+    allow_origins=[
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+        "http://localhost:5500",  # Común si usas Live Server de VS Code
+        "http://127.0.0.1:5500",
+        "*"                       # Permite accesos temporales libres en pruebas
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

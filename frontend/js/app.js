@@ -481,34 +481,56 @@ function generarReporteClinicoHtml() {
             <h3 style="color: #b45309; margin: 0; font-size: 1.25rem; font-weight: 800;">Estado ${estadoChat.nivelAlertaIA} (${estadoChat.nivelAlertaIA})</h3>
         </div>
         
-        <div style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px;">
+        <h3 style="color: #0f766e; font-size: 0.95rem; font-weight: 700; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.03em;">Indicadores Psicoemocionales</h3>
+        
+        <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 24px;">
             <div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 8px;">
-                    <span style="color: #475569; font-weight: 600;">Densidad de Ansiedad</span>
-                    <span style="color: #475569; font-weight: 700;">${p.ansiedad}%</span>
+                <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 6px;">
+                    <span style="color: #475569; font-weight: 600;">Estrés Percibido</span>
+                    <span style="color: ${getColorBarra(p.estres)}; font-weight: 700;">${p.estres}%</span>
                 </div>
-                <div style="background: #f1f5f9; height: 8px; border-radius: 9999px; overflow: hidden;">
-                    <div style="background: #3b82f6; width: ${p.ansiedad}%; height: 100%; border-radius: 9999px; transition: width 0.6s ease;"></div>
+                <div style="background: #f1f5f9; height: 8px; border-radius: 9999px; overflow: hidden; border: 1px solid #e2e8f0;">
+                    <div style="background: ${getColorBarra(p.estres)}; width: ${p.estres}%; height: 100%; border-radius: 9999px; transition: width 0.6s ease;"></div>
                 </div>
             </div>
 
             <div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 8px;">
-                    <span style="color: #475569; font-weight: 600;">Densidad de Estrés</span>
-                    <span style="color: #475569; font-weight: 700;">${p.estres}%</span>
+                <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 6px;">
+                    <span style="color: #475569; font-weight: 600;">Ansiedad Generalizada</span>
+                    <span style="color: ${getColorBarra(p.ansiedad)}; font-weight: 700;">${p.ansiedad}%</span>
                 </div>
-                <div style="background: #f1f5f9; height: 8px; border-radius: 9999px; overflow: hidden;">
-                    <div style="background: #3b82f6; width: ${p.estres}%; height: 100%; border-radius: 9999px; transition: width 0.6s ease;"></div>
+                <div style="background: #f1f5f9; height: 8px; border-radius: 9999px; overflow: hidden; border: 1px solid #e2e8f0;">
+                    <div style="background: ${getColorBarra(p.ansiedad)}; width: ${p.ansiedad}%; height: 100%; border-radius: 9999px; transition: width 0.6s ease;"></div>
                 </div>
             </div>
 
             <div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 8px;">
-                    <span style="color: #475569; font-weight: 600;">Densidad de Burnout</span>
-                    <span style="color: #475569; font-weight: 700;">${burnoutScore}%</span>
+                <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 6px;">
+                    <span style="color: #475569; font-weight: 600;">Agotamiento Emocional</span>
+                    <span style="color: ${getColorBarra(p.agotamiento)}; font-weight: 700;">${p.agotamiento}%</span>
                 </div>
-                <div style="background: #f1f5f9; height: 8px; border-radius: 9999px; overflow: hidden;">
-                    <div style="background: #3b82f6; width: ${burnoutScore}%; height: 100%; border-radius: 9999px; transition: width 0.6s ease;"></div>
+                <div style="background: #f1f5f9; height: 8px; border-radius: 9999px; overflow: hidden; border: 1px solid #e2e8f0;">
+                    <div style="background: ${getColorBarra(p.agotamiento)}; width: ${p.agotamiento}%; height: 100%; border-radius: 9999px; transition: width 0.6s ease;"></div>
+                </div>
+            </div>
+
+            <div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 6px;">
+                    <span style="color: #475569; font-weight: 600;">Cinismo / Desapego</span>
+                    <span style="color: ${getColorBarra(p.cinismo)}; font-weight: 700;">${p.cinismo}%</span>
+                </div>
+                <div style="background: #f1f5f9; height: 8px; border-radius: 9999px; overflow: hidden; border: 1px solid #e2e8f0;">
+                    <div style="background: ${getColorBarra(p.cinismo)}; width: ${p.cinismo}%; height: 100%; border-radius: 9999px; transition: width 0.6s ease;"></div>
+                </div>
+            </div>
+
+            <div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 6px;">
+                    <span style="color: #475569; font-weight: 600;">Eficacia Académica</span>
+                    <span style="color: ${getColorEficacia(p.eficacia)}; font-weight: 700;">${p.eficacia}%</span>
+                </div>
+                <div style="background: #f1f5f9; height: 8px; border-radius: 9999px; overflow: hidden; border: 1px solid #e2e8f0;">
+                    <div style="background: ${getColorEficacia(p.eficacia)}; width: ${p.eficacia}%; height: 100%; border-radius: 9999px; transition: width 0.6s ease;"></div>
                 </div>
             </div>
         </div>
