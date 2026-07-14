@@ -162,14 +162,15 @@ class SatisfaccionGuardar(BaseModel):
 
 @app.get("/primera-pregunta")
 def obtener_primera_pregunta():
-    texto_inicio = obtener_pregunta_aleatoria("inicio")
+    proxima_pregunta_clave = "ansiedad_frecuencia"
+    texto_inicio = obtener_pregunta_aleatoria(proxima_pregunta_clave)
     return {
         "finalizado": False,
         "indice_siguiente": 1,
-        "tipo": "texto_libre",
+        "tipo": "opciones",
         "pregunta": texto_inicio,
-        "categoria": "general",
-        "feedback_bot": "¡Hola! Comencemos el análisis adaptativo."
+        "categoria": proxima_pregunta_clave,
+        "feedback_bot": "¡Hola! Comencemos la evaluación."
     }
 
 @app.post("/procesar-turno")
@@ -191,27 +192,44 @@ def procesar_turno(data: TurnoChat):
             elif "burnout" in pred_raw or "agotamiento" in pred_raw: prediccion_semantica = "agotamiento"
 
     categorias_visitadas = [c for c in data.historial_categorias if c != "general"]
-    dimensiones_faltantes = [d for d in ["ansiedad", "estres", "agotamiento", "cinismo", "eficacia"] if d not in categorias_visitadas]
+    
+    # Extraemos las dimensiones base ya visitadas
+    dimensiones_visitadas = set()
+    for cat in categorias_visitadas:
+        for d in ["ansiedad", "estres", "agotamiento", "cinismo", "eficacia"]:
+            if d in cat:
+                dimensiones_visitadas.add(d)
+
+    dimensiones_faltantes = [d for d in ["ansiedad", "estres", "agotamiento", "cinismo", "eficacia"] if d not in dimensiones_visitadas]
     siguiente_dimension = dimensiones_faltantes[0] if dimensiones_faltantes else "ansiedad"
+
+    # 10 preguntas en total para mantener el patrón híbrido estricto (5 dimensiones x 2 preguntas c/u)
+    if len(categorias_visitadas) >= 10:
+        return {"finalizado": True, "indice_siguiente": turno_actual, "tipo": "", "pregunta": "", "categoria": "", "feedback_bot": ""}
 
     tipo_pregunta = "opciones"
 
-    if turno_actual == 1 or "general" in data.historial_categorias:
-        if prediccion_semantica in dimensiones_faltantes:
-            siguiente_dimension = prediccion_semantica
+    if not categorias_visitadas:
+        # Primera pregunta: frecuencia (marcar)
         proxima_pregunta_clave = f"{siguiente_dimension}_frecuencia"
     else:
-        ultima_cat = data.historial_categorias[-1] if data.historial_categorias else "ansiedad"
+        ultima_cat = categorias_visitadas[-1]
+        base_ultima_cat = "ansiedad"
+        for d in ["ansiedad", "estres", "agotamiento", "cinismo", "eficacia"]:
+            if d in ultima_cat:
+                base_ultima_cat = d
+                break
         
-        if respuesta.isdigit(): 
-            val = int(respuesta)
-            if val >= 2 and f"{ultima_cat}_profunda" not in categorias_visitadas:
-                proxima_pregunta_clave = f"{ultima_cat}_profunda"
-                tipo_pregunta = "texto_libre"
-            else:
-                proxima_pregunta_clave = f"{siguiente_dimension}_frecuencia"
+        # Si la última pregunta fue 'frecuencia', la siguiente debe ser obligatoriamente 'profunda' (escribir)
+        if "frecuencia" in ultima_cat:
+            proxima_pregunta_clave = f"{base_ultima_cat}_profunda"
+            tipo_pregunta = "texto_libre"
+        # Si la última fue 'profunda', pasamos a la siguiente dimensión con 'frecuencia' (marcar)
         else:
-            proxima_pregunta_clave = f"{siguiente_dimension}_frecuencia"
+            if not dimensiones_faltantes:
+                 return {"finalizado": True, "indice_siguiente": turno_actual, "tipo": "", "pregunta": "", "categoria": "", "feedback_bot": ""}
+            proxima_pregunta_clave = f"{dimensiones_faltantes[0]}_frecuencia"
+            tipo_pregunta = "opciones"
 
     if proxima_pregunta_clave in categorias_visitadas and dimensiones_faltantes:
         proxima_pregunta_clave = f"{dimensiones_faltantes[0]}_frecuencia"
