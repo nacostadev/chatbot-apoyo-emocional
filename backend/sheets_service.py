@@ -1,6 +1,6 @@
 import requests
 
-URL_GOOGLE_SHEETS = "https://script.google.com/macros/s/AKfycbxqebTjsWoi_PbF9Z8ugEVJKJMv5-_dqy6-LeexNnGROiObj-OI5YZHB5oLw6AzmvNu/exec"
+URL_GOOGLE_SHEETS = "https://script.google.com/macros/s/AKfycbyNvBPLmDZrNtckkSqJMk4qi79AR9zJSZ16IE3jAKVhPEZncIPs7iD4IcYthjqUGVc1/exec"
 
 
 def enviar_a_sheets(datos: dict) -> dict:
