@@ -1,7 +1,6 @@
-// ============================
-// DASHBOARD DE MÉTRICAS: datos reales desde el Google Sheet
-// ============================
-const URL_METRICAS_DASHBOARD = "http://localhost:8000/metricas-dashboard";
+// const URL_METRICAS_DASHBOARD = "http://localhost:8000/metricas-dashboard";
+const URL_METRICAS_DASHBOARD = "https://chatbot-apoyo-emocional.onrender.com/metricas-dashboard";
+
 
 const mapaFacultades = {
     'Ingeniería y Arquitectura': 'Ingenieria',

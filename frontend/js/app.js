@@ -1,3 +1,8 @@
+// const API_BASE_URL = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+//     ? "http://localhost:8000"
+//     : "https://chatbot-apoyo-emocional.onrender.com";
+const API_BASE_URL = "https://chatbot-apoyo-emocional.onrender.com";
+
 // ============================
 // SISTEMA DE PESTAÑAS (Chatbot / Métricas)
 // ============================
@@ -101,8 +106,7 @@ async function ejecutarFlujo() {
             if (estadoChat.indicePreguntaIA === 0 && !estadoChat.preguntaActualBot) {
                 controls.innerHTML = `<div style="text-align:center; color:#0d9488; font-size:0.8rem; font-weight:600;">⏳ Conectando...</div>`;
                 try {
-                    const response = await fetch("http://localhost:8000/primera-pregunta");
-                    const dataInit = await response.json();
+                    const response = await fetch("https://chatbot-apoyo-emocional.onrender.com/primera-pregunta"); const dataInit = await response.json();
                     estadoChat.preguntaActualBot = dataInit.pregunta;
                     estadoChat.categoriaActualBot = dataInit.categoria;
                     estadoChat.tipoPreguntaActualBot = dataInit.tipo;
@@ -137,9 +141,17 @@ async function ejecutarFlujo() {
 
         case 'reporte':
             controls.innerHTML = `
-                <button onclick="reiniciarChat()" class="btn-primary" style="max-width: 300px; margin: 0 auto;">
-                    <i data-lucide="refresh-cw"></i> Realizar Nueva Simulación
-                </button>
+                <div class="flex-row-layout" style="flex-wrap: wrap; gap: 10px; justify-content: center;">
+                    <button onclick="seleccionarOpcionCierre('informarse')" class="btn-secondary">
+                        <i data-lucide="book-open"></i> Informarme
+                    </button>
+                    <button onclick="seleccionarOpcionCierre('apoyo')" class="btn-secondary">
+                        <i data-lucide="life-buoy"></i> Buscar Apoyo
+                    </button>
+                    <button onclick="finalizarTamizajeYApagarBot()" class="btn-primary">
+                        <i data-lucide="log-out"></i> Salir
+                    </button>
+                </div>
             `;
             generarReporteClinicoHtml();
             break;
@@ -177,7 +189,9 @@ async function enviarTurnoTextoLibre() {
 
 async function avanzarTurnoAPI(valorEnviado) {
     const controls = document.getElementById('chat-controls');
-    controls.innerHTML = `<div style="text-align:center; color:#0d9488; font-size:0.8rem; font-weight:600;">⏳ Sincronizando flujo predictivo...</div>`;
+    if (controls) controls.innerHTML = `<div style="text-align:center; color:#0d9488; font-size:0.8rem; font-weight:600;">⏳ Sincronizando flujo predictivo...</div>`;
+
+    const URL_BASE = "http://localhost:8000"; 
 
     try {
         const res = await fetch("http://localhost:8000/procesar-turno", {
@@ -191,15 +205,24 @@ async function avanzarTurnoAPI(valorEnviado) {
             })
         });
 
+        if (!res.ok) {
+            throw new Error(`Error en el servidor: Status ${res.status}`);
+        }
+
         const dataTurno = await res.json();
 
+        if (!dataTurno) {
+            throw new Error("El servidor devolvió una respuesta vacía.");
+        }
+
         if (dataTurno.finalizado) {
-            estadoChat.pasoActual = 'finalizado';
+            estadoChat.pasoActual = 'reporte';
             await procesarDiagnosticoFinalNLP();
         } else {
-            estadoChat.preguntaActualBot = dataTurno.pregunta;
-            estadoChat.categoriaActualBot = dataTurno.categoria;
-            estadoChat.tipoPreguntaActualBot = dataTurno.tipo;
+            // CORRECCIÓN DE MAPEO CLAVE: Recibe correctamente lo enviado por Python
+            estadoChat.preguntaActualBot = dataTurno.pregunta_siguiente;
+            estadoChat.categoriaActualBot = dataTurno.categoria_siguiente;
+            estadoChat.tipoPreguntaActualBot = dataTurno.tipo_siguiente;
             estadoChat.indicePreguntaIA = dataTurno.indice_siguiente;
             estadoChat.preguntasTextoRespondidas.push(dataTurno.pregunta);
 
@@ -207,8 +230,8 @@ async function avanzarTurnoAPI(valorEnviado) {
             ejecutarFlujo();
         }
     } catch (error) {
-        console.error(error);
-        alert("Error en el procesamiento del turno semántico.");
+        console.error("Error en el turno del bot:", error);
+        alert("Error en el procesamiento del turno semántico con Localhost.");
     }
 }
 
@@ -217,37 +240,58 @@ async function procesarDiagnosticoFinalNLP() {
     controls.innerHTML = `<div style="text-align:center; color:#0d9488; font-size:0.8rem; font-weight:600;">🧠 Sintetizando evaluación clínica multivariable...</div>`;
 
     try {
-        const res = await fetch("http://localhost:8000/diagnostico-final", {
+        // Convertimos todos los valores de respuesta a String para cumplir estrictamente con el backend de FastAPI
+        const respuestasString = estadoChat.respuestasValores.map(val => String(val));
+
+        const res = await fetch(`${API_BASE_URL}/diagnostico-final`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                respuestas_valores: estadoChat.respuestasValores,
+                respuestas_valores: respuestasString,
                 tipos_preguntas: estadoChat.tiposRespondidos,
                 categorias_respondidas: estadoChat.categoriasRespondidas
             })
         });
 
+        if (!res.ok) {
+            const errText = await res.text();
+            throw new Error(`Error en el cálculo (Status ${res.status}): ${errText}`);
+        }
+
         const dataDiag = await res.json();
 
-        estadoChat.puntajes = {
-            estres: dataDiag.estres,
-            ansiedad: dataDiag.ansiedad,
-            agotamiento: dataDiag.agotamiento,
-            cinismo: dataDiag.cinismo,
-            eficacia: dataDiag.eficacia
-        };
-        estadoChat.conclusionIA = dataDiag.conclusion;
-        estadoChat.nivelAlertaIA = dataDiag.nivel_alerta;
+        estadoChat.puntajes.estres = diag.estres;
+        estadoChat.puntajes.ansiedad = diag.ansiedad;
+        estadoChat.puntajes.agotamiento = diag.agotamiento;
+        estadoChat.puntajes.cinismo = diag.cinismo;
+        estadoChat.puntajes.eficacia = diag.eficacia;
+        
+        estadoChat.nivelAlertaIA = diag.nivel_alerta;
+        estadoChat.conclusionIA = diag.conclusion;
 
-        actualizarIndicadoresVisuales();
-
-        await guardarResultadosEnBackend();
+        estadoChat.rptaEstres = diag.rpta_estres;
+        estadoChat.rptaAnsiedad = diag.rpta_ansiedad;
+        estadoChat.rptaAgotamiento = diag.rpta_agotamiento;
+        estadoChat.rptaCinismo = diag.rpta_cinismo;
+        estadoChat.rptaEficacia = diag.rpta_eficacia;
 
         generarReporteClinicoHtml();
 
-    } catch (err) {
-        console.error("Error en diagnóstico predictivo final:", err);
-        controls.innerHTML = `<div style="text-align:center; color:#ef4444; font-size:0.8rem;">Error al procesar el cierre clínico.</div>`;
+        guardarDiagnosticoEnSheets();
+
+        const controls = document.getElementById('chat-controls');
+        if (controls) {
+            controls.innerHTML = `
+                <div style="text-align: center; color: #64748b; font-size: 0.85rem; padding: 12px; font-weight: 500;">
+                    🔒 Tamizaje finalizado y almacenado con éxito.
+                </div>
+            `;
+        }
+
+    } catch (error) {
+        console.error("Error al computar el diagnóstico de 5 dimensiones:", error);
+        eliminarMensajeCargaBot(loadingId);
+        alert("Ocurrió un error al procesar tu análisis. Por favor, reintenta.");
     }
 }
 
@@ -296,6 +340,30 @@ function procesarFacultad(fac) {
     ejecutarFlujo();
 }
 
+function mostrarMensajeCargaBot() {
+    const box = document.getElementById('chat-messages');
+    if (!box) return null;
+
+    const id = 'loading-' + Date.now();
+    const indicador = document.createElement('div');
+    indicador.id = id;
+    indicador.className = "message-wrapper bot";
+    indicador.innerHTML = `
+        <div class="avatar-icon"><i data-lucide="bot" style="width:16px;height:16px;"></i></div>
+        <div class="message-bubble typing-bubble"><span></span><span></span><span></span></div>
+    `;
+    box.appendChild(indicador);
+    box.scrollTop = box.scrollHeight;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    return id;
+}
+
+function eliminarMensajeCargaBot(id) {
+    if (!id) return;
+    const el = document.getElementById(id);
+    if (el) el.remove();
+}
+
 function mostrarEfectoEscrituraBot(texto) {
     return new Promise((resolve) => {
         const box = document.getElementById('chat-messages');
@@ -330,185 +398,129 @@ function mostrarEfectoEscrituraBot(texto) {
 let recursosModalActual = { video1: '', video2: '', consejo: '' };
 
 function generarReporteClinicoHtml() {
-    const box = document.getElementById('chat-messages');
-    if (!box) return;
+    const p = estadoChat.puntajes;
+    const colorAlerta = estadoChat.nivelAlertaIA === 'Alto' ? '#ef4444' : (estadoChat.nivelAlertaIA === 'Moderado' ? '#f59e0b' : '#10b981');
 
-    const e = estadoChat.puntajes.estres;
-    const a = estadoChat.puntajes.ansiedad;
-    const ag = estadoChat.puntajes.agotamiento;
-    const c = estadoChat.puntajes.cinismo;
-    const ef = estadoChat.puntajes.eficacia;
-    const riesgoEficacia = 100 - ef; // eficacia baja = riesgo alto
+    // Colores basados en el diseño de la imagen adjunta
+    const getColorBarra = (val) => val > 70 ? '#ef4444' : (val > 35 ? '#f59e0b' : '#10b981');
+    const getColorEficacia = (val) => val < 40 ? '#ef4444' : (val < 70 ? '#f59e0b' : '#10b981');
 
-    let severidad = estadoChat.nivelAlertaIA || "Bajo";
-    let claseRiesgo = "low";
-    let labelRiesgo = "Estable / Buen estado";
-
-    if (severidad === "Moderado") {
-        claseRiesgo = "mod";
-        labelRiesgo = "Estado Moderado";
-    } else if (severidad === "Alto / Crítico" || severidad === "Crítico") {
-        claseRiesgo = "crit";
-        labelRiesgo = "Índice Alto / Crítico";
-    }
-
-    let categoriaMayor = 'estres';
-    let maxPuntaje = e;
-    if (a > maxPuntaje) { categoriaMayor = 'ansiedad'; maxPuntaje = a; }
-    if (ag > maxPuntaje) { categoriaMayor = 'agotamiento'; maxPuntaje = ag; }
-    if (c > maxPuntaje) { categoriaMayor = 'cinismo'; maxPuntaje = c; }
-    if (riesgoEficacia > maxPuntaje) { categoriaMayor = 'eficacia'; maxPuntaje = riesgoEficacia; }
-
-    const recursosPorCategoria = {
-        ansiedad: {
-            titulo: "Recursos para Manejo de Ansiedad",
-            video1: "https://www.youtube.com/embed/JQr6Ld8d-f8",
-            consejo: "Practica la respiración diafragmática 4-7-8 antes de tus evaluaciones académicas."
-        },
-        estres: {
-            titulo: "Recursos para Estrés Académico",
-            video1: "https://www.youtube.com/embed/ErwsvIqoRyI",
-            consejo: "Implementa bloques Pomodoro controlados para evitar la saturación cognitiva de entregas."
-        },
-        agotamiento: {
-            titulo: "Recursos contra el Agotamiento Académico",
-            video1: "https://www.youtube.com/embed/6WX3RH25o8M",
-            consejo: "Establece barreras firmes entre tus fines de semana de ocio y las horas de estudio."
-        },
-        cinismo: {
-            titulo: "Recursos para reconectar con tus estudios",
-            video1: "https://www.youtube.com/embed/6WX3RH25o8M",
-            consejo: "Identifica una razón personal detrás de tu carrera; reconectar con el propósito reduce el distanciamiento emocional."
-        },
-        eficacia: {
-            titulo: "Recursos para fortalecer tu eficacia académica",
-            video1: "https://www.youtube.com/embed/ErwsvIqoRyI",
-            consejo: "Divide tus tareas en metas pequeñas y alcanzables; los logros concretos reconstruyen la confianza en tu desempeño."
-        }
-    };
-    recursosModalActual = recursosPorCategoria[categoriaMayor];
-
-    const htmlInforme = `
-        <div class="report-card">
-            <div class="report-title-section">
-                <span class="report-meta-tag">Análisis Conversacional Mixto - UCV</span>
-                <h4>Informe Psicoemocional vía Redes Neuronales NLP</h4>
+    let html = `
+    <div class="reporte-final-anim" style="background:#ffffff; border: 1px solid #e2e8f0; border-radius:16px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05); padding:24px; width:100%; max-width:650px; margin: 15px auto; font-family: 'Plus Jakarta Sans', sans-serif;">
+        
+        <div style="border-bottom: 2px solid #0f766e; padding-bottom: 16px; margin-bottom: 20px; display:flex; align-items:center; gap:14px;">
+            <div style="background:#0f766e; color:white; width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                <i data-lucide="clipboard-check" style="width:22px; height:22px;"></i>
             </div>
-
-            <div class="report-grid-student">
-                <div>Estudiante: <b>${estadoChat.nombreEstudiante}</b></div>
-                <div>Facultad: <b>${estadoChat.facultadSeleccionada}</b></div>
-            </div>
-
-            <!-- 1. Indicador de Estado Principal -->
-            <div class="insignia-risk ${claseRiesgo}" style="margin-bottom: 15px;">
-                <span class="insignia-label">Indicador de Alerta Predictiva</span>
-                <span class="insignia-value" style="font-size: 1.15rem; font-weight: 700; display: block; margin-top: 4px;">${labelRiesgo} (${severidad})</span>
-            </div>
-
-            <!-- 3. Gráficos Interactivos (Chart.js) -->
-            <div style="position: relative; height: 220px; width: 100%; margin-bottom: 20px; background-color: #f8fafc; border-radius: 12px; padding: 10px; border: 1px solid #f1f5f9;">
-                <canvas id="graficoResultadosIA"></canvas>
-            </div>
-
-            <!-- 2. Sección de Porcentajes -->
-            <div class="metric-row">
-                <div class="metric-header-info"><span>Densidad de Ansiedad</span><span>${a}%</span></div>
-                <div class="progress-track-css"><div class="progress-fill-css ansiedad" style="width: ${a}%"></div></div>
-            </div>
-            <div class="metric-row">
-                <div class="metric-header-info"><span>Densidad de Estrés</span><span>${e}%</span></div>
-                <div class="progress-track-css"><div class="progress-fill-css estres" style="width: ${e}%"></div></div>
-            </div>
-            <div class="metric-row">
-                <div class="metric-header-info"><span>Densidad de Agotamiento</span><span>${ag}%</span></div>
-                <div class="progress-track-css"><div class="progress-fill-css burnout" style="width: ${ag}%"></div></div>
-            </div>
-            <div class="metric-row">
-                <div class="metric-header-info"><span>Densidad de Cinismo</span><span>${c}%</span></div>
-                <div class="progress-track-css"><div class="progress-fill-css burnout" style="width: ${c}%"></div></div>
-            </div>
-            <div class="metric-row">
-                <div class="metric-header-info"><span>Eficacia Académica Percibida</span><span>${ef}%</span></div>
-                <div class="progress-track-css"><div class="progress-fill-css estres" style="width: ${ef}%"></div></div>
-            </div>
-
-            <div class="interpretation-box" style="margin-top: 16px;">
-                <strong>Diagnóstico NLP Híbrido:</strong> ${estadoChat.conclusionIA}
+            <div>
+                <h2 style="color: #0f766e; margin: 0; font-size: 1.2rem; font-weight: 700; letter-spacing: -0.025em; text-transform: uppercase;">Reporte de Bienestar Académico</h2>
+                <p style="color: #64748b; font-size: 0.78rem; margin: 2px 0 0 0; line-height: 1.2;">Evaluación Multidimensional (MBI-SS, GAD-7 y PSS-14)</p>
             </div>
         </div>
-    `;
 
-    const wrapper = document.createElement('div');
-    wrapper.className = "message-wrapper bot";
-    wrapper.style.maxWidth = "100%";
-    wrapper.innerHTML = `
-        <div class="avatar-icon"><i data-lucide="award" style="width:16px;height:16px;color:#14b8a6;"></i></div>
-        <div style="width: 100%; max-width: 550px;">${htmlInforme}</div>
-    `;
-    box.appendChild(wrapper);
-    box.scrollTop = box.scrollHeight;
+        <div style="background: #f8fafc; border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; border: 1px solid #f1f5f9;">
+            <table style="width: 100%; font-size: 0.85rem; border-collapse: collapse;">
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 6px 0; color: #64748b; font-weight: 500; width: 35%;">Estudiante:</td>
+                    <td style="padding: 6px 0; font-weight: 600; color: #1e293b; text-align: right;">${estadoChat.nombreEstudiante}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 6px 0; color: #64748b; font-weight: 500;">Edad / Sexo:</td>
+                    <td style="padding: 6px 0; font-weight: 600; color: #1e293b; text-align: right;">${estadoChat.edadEstudiante} años / ${estadoChat.sexoEstudiante}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 6px 0; color: #64748b; font-weight: 500;">Facultad / Escuela:</td>
+                    <td style="padding: 6px 0; font-weight: 600; color: #1e293b; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px;">${estadoChat.facultadSeleccionada}</td>
+                </tr>
+            </table>
+        </div>
 
-    // Renderizar gráfico con Chart.js inmediatamente
-    setTimeout(() => {
-        const ctx = document.getElementById('graficoResultadosIA');
-        if (ctx) {
-            const valores = [a, e, ag, c, ef];
-            const colorPorValor = (v, esEficacia) => {
-                const riesgo = esEficacia ? (100 - v) : v;
-                return riesgo >= 60 ? 'rgba(239, 68, 68, 0.85)' : (riesgo >= 35 ? 'rgba(245, 158, 11, 0.85)' : 'rgba(16, 185, 129, 0.85)');
-            };
-            const bordePorValor = (v, esEficacia) => {
-                const riesgo = esEficacia ? (100 - v) : v;
-                return riesgo >= 60 ? '#ef4444' : (riesgo >= 35 ? '#f59e0b' : '#10b981');
-            };
-            const esEficaciaFlags = [false, false, false, false, true];
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-left: 5px solid ${colorAlerta}; padding: 16px; border-radius: 8px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <span style="font-weight: 700; color: #334155; font-size: 0.88rem; letter-spacing: -0.01em;">NIVEL DE RIESGO:</span>
+                <span style="background: ${colorAlerta}; color: white; padding: 4px 12px; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">
+                    ${estadoChat.nivelAlertaIA}
+                </span>
+            </div>
+            <p style="color: #475569; font-size: 0.85rem; line-height: 1.55; margin: 0; text-align: justify;">
+                <strong style="color: #1e293b;">Análisis Psicoeducativo:</strong> ${estadoChat.conclusionIA}
+            </p>
+        </div>
 
-            new Chart(ctx.getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: ['Ansiedad', 'Estrés', 'Agotamiento', 'Cinismo', 'Eficacia'],
-                    datasets: [{
-                        label: 'Nivel (%)',
-                        data: valores,
-                        backgroundColor: valores.map((v, i) => colorPorValor(v, esEficaciaFlags[i])),
-                        borderColor: valores.map((v, i) => bordePorValor(v, esEficaciaFlags[i])),
-                        borderWidth: 1.5,
-                        borderRadius: 8,
-                        barPercentage: 0.6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) { return ` ${context.parsed.y}%`; }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 100,
-                            ticks: {
-                                stepSize: 25,
-                                callback: function(value) { return value + '%'; },
-                                font: { size: 10, weight: '500' }
-                            },
-                            grid: { color: '#f1f5f9' }
-                        },
-                        x: {
-                            grid: { display: false },
-                            ticks: { font: { size: 10, weight: '600' } }
-                        }
-                    }
-                }
-            });
-        }
-    }, 100);
+        <h3 style="color: #0f766e; font-size: 0.95rem; font-weight: 700; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.03em;">Indicadores Psicoemocionales</h3>
+        
+        <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 24px;">
+            <div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 6px;">
+                    <span style="color: #475569; font-weight: 600;">Estrés Percibido (PSS)</span>
+                    <span style="color: ${getColorBarra(p.estres)}; font-weight: 700;">${p.estres}%</span>
+                </div>
+                <div style="background: #f1f5f9; height: 8px; border-radius: 9999px; overflow: hidden; border: 1px solid #e2e8f0;">
+                    <div style="background: ${getColorBarra(p.estres)}; width: ${p.estres}%; height: 100%; border-radius: 9999px; transition: width 0.6s ease;"></div>
+                </div>
+            </div>
+
+            <div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 6px;">
+                    <span style="color: #475569; font-weight: 600;">Ansiedad Generalizada (GAD)</span>
+                    <span style="color: ${getColorBarra(p.ansiedad)}; font-weight: 700;">${p.ansiedad}%</span>
+                </div>
+                <div style="background: #f1f5f9; height: 8px; border-radius: 9999px; overflow: hidden; border: 1px solid #e2e8f0;">
+                    <div style="background: ${getColorBarra(p.ansiedad)}; width: ${p.ansiedad}%; height: 100%; border-radius: 9999px; transition: width 0.6s ease;"></div>
+                </div>
+            </div>
+
+            <div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 6px;">
+                    <span style="color: #475569; font-weight: 600;">Agotamiento Emocional (MBI-SS D1)</span>
+                    <span style="color: ${getColorBarra(p.agotamiento)}; font-weight: 700;">${p.agotamiento}%</span>
+                </div>
+                <div style="background: #f1f5f9; height: 8px; border-radius: 9999px; overflow: hidden; border: 1px solid #e2e8f0;">
+                    <div style="background: ${getColorBarra(p.agotamiento)}; width: ${p.agotamiento}%; height: 100%; border-radius: 9999px; transition: width 0.6s ease;"></div>
+                </div>
+            </div>
+
+            <div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 6px;">
+                    <span style="color: #475569; font-weight: 600;">Cinismo / Desapego (MBI-SS D2)</span>
+                    <span style="color: ${getColorBarra(p.cinismo)}; font-weight: 700;">${p.cinismo}%</span>
+                </div>
+                <div style="background: #f1f5f9; height: 8px; border-radius: 9999px; overflow: hidden; border: 1px solid #e2e8f0;">
+                    <div style="background: ${getColorBarra(p.cinismo)}; width: ${p.cinismo}%; height: 100%; border-radius: 9999px; transition: width 0.6s ease;"></div>
+                </div>
+            </div>
+
+            <div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 6px;">
+                    <span style="color: #475569; font-weight: 600;">Eficacia Académica (MBI-SS D3)</span>
+                    <span style="color: ${getColorEficacia(p.eficacia)}; font-weight: 700;">${p.eficacia}%</span>
+                </div>
+                <div style="background: #f1f5f9; height: 8px; border-radius: 9999px; overflow: hidden; border: 1px solid #e2e8f0;">
+                    <div style="background: ${getColorEficacia(p.eficacia)}; width: ${p.eficacia}%; height: 100%; border-radius: 9999px; transition: width 0.6s ease;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div style="border-top: 1px solid #f1f5f9; padding-top: 18px; display: flex; justify-content: center;">
+            <button onclick="abrirModalSatisfaccion()" style="background: #0f766e; color: #ffffff; border: none; padding: 11px 22px; border-radius: 10px; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(15, 118, 110, 0.2);">
+                <i data-lucide="star" style="width:16px; height:16px;"></i>
+                Evaluar Experiencia del Chatbot
+            </button>
+        </div>
+    </div>`;
+
+    const box = document.getElementById('chat-messages');
+    if (box) {
+        // En lugar de borrar la pantalla, agregamos el reporte de forma fluida como burbuja final del bot
+        const reporteWrapper = document.createElement('div');
+        reporteWrapper.className = "message-wrapper bot w-full clear-both dynamic-message-fade";
+        reporteWrapper.innerHTML = html;
+        box.appendChild(reporteWrapper);
+        
+        // Hacemos un scroll suave para enfocar el reporte clínico
+        setTimeout(() => {
+            box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
+        }, 100);
 
     setTimeout(async () => {
         await mostrarEfectoEscrituraBot(`El procesamiento ha concluido con éxito.`);
@@ -650,54 +662,31 @@ function configurarEstrellas(idContenedor, propiedad) {
 }
 
 async function guardarResultadosEnBackend() {
-    const URL_GUARDAR_DIAGNOSTICO = "http://localhost:8000/guardar-diagnostico";
-
-    const obtenerRespuestasPorCategoria = (categoriaBase) => {
-        let opcionales = [];
-        let libres = [];
-
-        estadoChat.categoriasRespondidas.forEach((cat, index) => {
-            if (cat.startsWith(categoriaBase)) {
-                const rpta = estadoChat.respuestasValores[index] || "No registra";
-                if (cat.endsWith("_frecuencia")) {
-                    opcionales.push(rpta);
-                } else if (cat.endsWith("_profunda")) {
-                    libres.push(rpta);
-                }
-            }
-        });
-
-        return `Opc: ${opcionales.join(", ") || "N/A"} | Libre: ${libres.join(". ") || "N/A"}`;
-    };
-
-    const datosEnvio = {
-        Fecha: new Date().toLocaleString("es-PE", { timeZone: "America/Lima" }),
-        Estudiante: estadoChat.nombreEstudiante || "Estudiante Anónimo",
-        Edad: Number(estadoChat.edadEstudiante) || 0,
-        Sexo: estadoChat.sexoEstudiante || "No especifica",
-        Facultad: estadoChat.facultadSeleccionada || "No especifica",
-
-        Score_Estres: estadoChat.puntajes.estres,
-        Score_Ansiedad: estadoChat.puntajes.ansiedad,
-        Score_Agotamiento: estadoChat.puntajes.agotamiento,
-        Score_Cinismo: estadoChat.puntajes.cinismo,
-        Score_Eficacia: estadoChat.puntajes.eficacia,
-
-        Alerta: estadoChat.nivelAlertaIA || "Bajo",
-        Diagnostico: estadoChat.conclusionIA || "Sin novedades clínicas reportadas",
-
-        Rpta_Estres: obtenerRespuestasPorCategoria("estres"),
-        Rpta_Ansiedad: obtenerRespuestasPorCategoria("ansiedad"),
-        Rpta_Agotamiento: obtenerRespuestasPorCategoria("agotamiento"),
-        Rpta_Cinismo: obtenerRespuestasPorCategoria("cinismo"),
-        Rpta_Eficacia: obtenerRespuestasPorCategoria("eficacia")
-    };
-
     try {
-        const res = await fetch(URL_GUARDAR_DIAGNOSTICO, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(datosEnvio)
+        const payload = {
+            Fecha: new Date().toISOString(),
+            Estudiante: estadoChat.nombreEstudiante || "Anónimo",
+            Edad: parseInt(estadoChat.edadEstudiante) || 18,
+            Sexo: estadoChat.sexoEstudiante || "No especifica",
+            Facultad: estadoChat.facultadSeleccionada || "General",
+            Score_Estres: parseFloat(estadoChat.puntajes.estres) || 0.0,
+            Score_Ansiedad: parseFloat(estadoChat.puntajes.ansiedad) || 0.0,
+            Score_Agotamiento: parseFloat(estadoChat.puntajes.agotamiento) || 0.0,
+            Score_Cinismo: parseFloat(estadoChat.puntajes.cinismo) || 0.0,
+            Score_Eficacia: parseFloat(estadoChat.puntajes.eficacia) || 0.0,
+            Alerta: estadoChat.nivelAlertaIA || "Bajo",
+            Diagnostico: estadoChat.conclusionIA || "",
+            Rpta_Estres: estadoChat.rptaEstres || '',
+            Rpta_Ansiedad: estadoChat.rptaAnsiedad || '',
+            Rpta_Agotamiento: estadoChat.rptaAgotamiento || '',
+            Rpta_Cinismo: estadoChat.rptaCinismo || '',
+            Rpta_Eficacia: estadoChat.rptaEficacia || ''
+        };
+
+        const res = await fetch("https://chatbot-apoyo-emocional.onrender.com/guardar-diagnostico", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
         });
         const resultado = await res.json();
         if (resultado.status === "error") {
@@ -748,7 +737,7 @@ async function enviarSatisfaccionSheets() {
         btnEnviar.textContent = 'Enviando...';
     }
 
-    const URL_GUARDAR_SATISFACCION = "http://localhost:8000/guardar-satisfaccion";
+    const URL_GUARDAR_SATISFACCION = `${API_BASE_URL}/guardar-satisfaccion`;
     const comentario = document.getElementById("txtComentarioSatisfaccion").value.trim();
 
     const datosSatisfaccion = {
@@ -818,4 +807,5 @@ function mostrarToastFeedback() {
     setTimeout(() => {
         window.location.reload();
     }, 3000);
+}
 }
