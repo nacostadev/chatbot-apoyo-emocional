@@ -1,11 +1,7 @@
-// ============================
-// URL BASE DEL BACKEND (única fuente de verdad)
-// Detecta automáticamente si estás en desarrollo local o en producción (Render),
-// para no volver a mezclar "localhost:8000" con la URL desplegada.
-// ============================
-const API_BASE_URL = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
-    ? "http://localhost:8000"
-    : "https://chatbot-apoyo-emocional.onrender.com";
+// const API_BASE_URL = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+//     ? "http://localhost:8000"
+//     : "https://chatbot-apoyo-emocional.onrender.com";
+const API_BASE_URL = "https://chatbot-apoyo-emocional.onrender.com";
 
 // ============================
 // SISTEMA DE PESTAÑAS (Chatbot / Métricas)
