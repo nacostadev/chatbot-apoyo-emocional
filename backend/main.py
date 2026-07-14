@@ -13,7 +13,7 @@ if ruta_raiz not in sys.path:
     sys.path.insert(0, ruta_raiz)
 
 from backend.preguntas_banco import obtener_pregunta_aleatoria
-from backend.preguntas_banco import obtener_pregunta_aleatoria
+from backend.sheets_service import enviar_a_sheets, obtener_metricas_sheets
 
 app = FastAPI(title="API UCV")
 
@@ -127,6 +127,34 @@ class EvaluacionFinal(BaseModel):
     respuestas_valores: List[str]
     tipos_preguntas: List[str]
     categorias_respondidas: List[str]
+
+# ============================
+# Modelos para guardar en Google Sheets
+# ============================
+class DiagnosticoGuardar(BaseModel):
+    Fecha: str
+    Estudiante: str
+    Edad: int
+    Sexo: str
+    Facultad: str
+    Score_Ansiedad: float
+    Score_Estres: float
+    Score_Burnout: float
+    Score_Total: float
+    Alerta: str
+    Diagnostico: str
+    Rpta_Ansiedad: str
+    Rpta_Estres: str
+    Rpta_Burnout: str
+
+class SatisfaccionGuardar(BaseModel):
+    FlujoTipo: str = "SATISFACCION_USUARIO"
+    Fecha: str
+    Estudiante: str
+    Facultad: str
+    ClaridadPreguntas: int
+    CoherenciaBot: int
+    SugerenciaComentario: str
 
 @app.get("/primera-pregunta")
 def obtener_primera_pregunta():
@@ -301,5 +329,27 @@ def generar_diagnostico_final(data: EvaluacionFinal):
         "nivel_alerta": alerta,
         "texto_consolidado_procesado": " | ".join(lista_textos_libres)
     }
+
+
+# ============================
+# ENDPOINTS: Conexión con Google Sheets (vía Apps Script)
+# ============================
+@app.post("/guardar-diagnostico")
+def guardar_diagnostico(data: DiagnosticoGuardar):
+    """El frontend llama a esto en vez de golpear Google Apps Script directamente."""
+    resultado = enviar_a_sheets(data.dict())
+    return resultado
+
+@app.post("/guardar-satisfaccion")
+def guardar_satisfaccion(data: SatisfaccionGuardar):
+    """El frontend llama a esto en vez de golpear Google Apps Script directamente."""
+    resultado = enviar_a_sheets(data.dict())
+    return resultado
+
+@app.get("/metricas-dashboard")
+def metricas_dashboard():
+    """El dashboard llama a esto para leer los datos reales del Google Sheet."""
+    return obtener_metricas_sheets()
+
 
 app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
