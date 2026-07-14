@@ -8,147 +8,85 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
 
+# Configuración segura de rutas para importación de submódulos locales
 ruta_raiz = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if ruta_raiz not in sys.path:
     sys.path.insert(0, ruta_raiz)
 
-from backend.preguntas_banco import obtener_pregunta_aleatoria
-from backend.sheets_service import enviar_a_sheets, obtener_metricas_sheets
+# Importaciones de tu banco de preguntas y servicio de Google Sheets
+try:
+    from backend.preguntas_banco import obtener_pregunta_aleatoria
+    from backend.sheets_service import enviar_a_sheets, obtener_metricas_sheets
+except ModuleNotFoundError:
+    # Fallback si ejecutas el comando directamente dentro de la carpeta 'backend'
+    from preguntas_banco import obtener_pregunta_aleatoria
+    from sheets_service import enviar_a_sheets, obtener_metricas_sheets
 
-app = FastAPI(title="API UCV")
+app = FastAPI(title="API UCV - Sistema Inteligente de Evaluación Psicoemocional")
 
+# Configuración de CORS con soporte explícito para localhost y pruebas locales
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+        "http://localhost:5500",  # Común si usas Live Server de VS Code
+        "http://127.0.0.1:5500",
+        "*"                       # Permite accesos temporales libres en pruebas
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Carga predictiva del modelo de Machine Learning (NLP)
 ruta_modelo = os.path.join("backend", "model", "modelo_emocional.pkl")
 ruta_vectorizador = os.path.join("backend", "model", "vectorizador_texto.pkl")
+
+if not os.path.exists(ruta_modelo):
+    # Si se ejecuta desde dentro de la subcarpeta 'backend'
+    ruta_modelo = os.path.join("model", "modelo_emocional.pkl")
+    ruta_vectorizador = os.path.join("model", "vectorizador_texto.pkl")
 
 modelo_ia = joblib.load(ruta_modelo) if os.path.exists(ruta_modelo) else None
 vectorizador = joblib.load(ruta_vectorizador) if os.path.exists(ruta_vectorizador) else None
 
 MAPEO_OPCIONES_TEXTO = {
     0: "nunca siento este malestar todo en orden",
-    1: "varios días presento leve preocupación intermitente",
-    2: "más de la mitad de los días afecta mi rutina",
-    3: "casi todos los días es severo y crítico"
+    1: "varios días con ligera incomodidad o cansancio",
+    2: "más de la mitad de los días con desgaste evidente",
+    3: "casi todos los días con extrema tensión y afectación"
 }
 
-def generar_feedback_empatico(respuesta: str, prediccion_semantica: str, proxima_pregunta_clave: str) -> str:
-    if respuesta.isdigit():
-        val = int(respuesta)
-        if "profunda" in proxima_pregunta_clave:
-            opciones_profundas = [
-                "Lamento mucho escuchar que esto te afecte de forma recurrente. Para poder comprender mejor tu situación, ¿podrías detallarme un poco más cómo experimentas este aspecto?",
-                "Veo que es algo que se presenta bastante en tu rutina. Valoro tu sinceridad; por favor, cuéntame un poco más detalladamente sobre esto.",
-                "Sé que lidiar con esta frecuencia no es sencillo. Me gustaría que me describieras con tus propias palabras qué experimentas en estas situaciones.",
-                "Gracias por compartir la frecuencia. Al ser un aspecto recurrente, me ayudaría mucho si pudieras detallarme un poco más esta experiencia."
-            ]
-            return random.choice(opciones_profundas)
-            
-        if val == 0:
-            opciones = [
-                "Me alegra saber que no experimentas esta molestia con frecuencia. Sigamos evaluando otras áreas.",
-                "Qué buena noticia que no sea un problema recurrente para ti. Avancemos al siguiente indicador.",
-                "Excelente. Continuemos explorando otros factores de tu bienestar universitario.",
-                "Entendido. Qué positivo saberlo. Sigamos con la evaluación."
-            ]
-            return random.choice(opciones)
-        elif val == 1:
-            opciones = [
-                "Entiendo. A veces estos sentimientos aparecen de forma ocasional o intermitente. Continuemos.",
-                "Comprendo que se presente de manera esporádica. Evaluemos la siguiente dimensión.",
-                "De acuerdo. Tomamos nota de esta frecuencia leve y seguimos adelante.",
-                "Gracias por responder. Sigamos analizando otros aspectos de tu bienestar."
-            ]
-            return random.choice(opciones)
-        elif val == 2:
-            opciones = [
-                "Entiendo. Que se presente más de la mitad de los días ya empieza a ser desgastante. Sigamos evaluando.",
-                "Comprendo que es una presencia constante en tu semana. Sigamos adelante con la evaluación.",
-                "Gracias por compartirlo. Mapear la persistencia de este malestar es clave. Continuemos.",
-                "Entendido. Tomamos nota de que es una molestia frecuente. Sigamos con el siguiente criterio."
-            ]
-            return random.choice(opciones)
-        else: # val == 3
-            opciones = [
-                "Lamento mucho que pases por esto casi a diario. Debe ser muy agotador. Sigamos evaluando para comprender todo tu panorama.",
-                "Eso suena sumamente retador y desgastante. Valoro mucho tu sinceridad. Continuemos adelante.",
-                "Siento que experimentes esta carga de forma tan constante. Avancemos al siguiente indicador clave.",
-                "Lamento que esta situación sea tan persistente. Sigamos con las preguntas para mapear bien tu bienestar."
-            ]
-            return random.choice(opciones)
-            
-    # 2. Si es respuesta de texto libre
-    respuesta_normalizada = respuesta.lower().strip()
-    
-    # Palabras clave de alta intensidad emocional
-    palabras_criticas = ["morir", "colapso", "llorar", "asfixia", "pánico", "pecho", "desesperación", "desesperado", "auxilio", "ayuda", "soledad", "llorando"]
-    if any(w in respuesta_normalizada for w in palabras_criticas):
-        return "Noto una carga emocional muy intensa y difícil en tu respuesta. Valoro enormemente tu sinceridad y valentía al expresarlo. Continuemos con mucho cuidado."
-        
-    # Palabras clave de sueño/descanso
-    palabras_descanso = ["dormir", "sueño", "desvelo", "despierto", "cansancio", "insomnio", "fatiga", "agotado", "sin fuerzas", "cansada", "cansado"]
-    if any(w in respuesta_normalizada for w in palabras_descanso):
-        return "Registrando el impacto en tu descanso y energía. No dormir bien o sentir cansancio constante influye mucho en cómo nos sentimos mentalmente. Evaluemos a fondo."
-
-    # Palabras de motivación/aprendizaje/positivas
-    palabras_positivas = ["bien", "tranquilo", "motivado", "aprender", "feliz", "estable", "optimista", "ganas", "entusiasmado", "contento", "excelente", "mejor", "ánimo", "animo"]
-    if any(w in respuesta_normalizada for w in palabras_positivas):
-        return "¡Qué bueno leer eso! Me alegra mucho que comiences con una actitud positiva y con buena disposición. Sigamos adelante con la evaluación."
-
-    # Palabras de carga académica
-    palabras_academicas = ["examen", "exámenes", "tarea", "tareas", "curso", "cursos", "profesor", "profesores", "docente", "universidad", "carga", "estudiar", "presión", "clases", "parciales", "finales", "exposiciones"]
-    if any(w in respuesta_normalizada for w in palabras_academicas):
-        return "La carga académica y las responsabilidades en la universidad suelen generar gran presión. Comprendo perfectamente tu sentir, continuemos indagando."
-
-    # Si no coincide con palabras específicas, usamos la predicción del modelo de IA (ansiedad, estres, burnout)
-    if prediccion_semantica == "ansiedad":
-        return "Entiendo que esa intranquilidad o ansiedad puede ser muy abrumadora en el día a día. Vamos a profundizar en ello con la siguiente pregunta."
-    elif prediccion_semantica == "estres" or prediccion_semantica == "estrés":
-        return "La tensión y el estrés acumulados se sienten pesados. Valoro que compartas estos detalles para poder mapear bien tu situación. Continuemos."
-    elif prediccion_semantica == "burnout":
-        return "Sentir ese desgaste o falta de motivación extrema con los estudios es muy difícil. Sigamos con la evaluación para comprender este cansancio académico."
-        
-    # Feedback por defecto para texto libre
-    return "Agradezco mucho que compartas cómo te sientes con ese nivel de detalle. Sigamos con la siguiente pregunta."
-
-class TurnoChat(BaseModel):
+# ==========================================
+# ESTRUCTURAS DE DATOS DE ENTRADA (Pydantic v2 compatible)
+# ==========================================
+class TurnoInput(BaseModel):
     indice_pregunta: int
     valor_respuesta: str
     historial_categorias: List[str]
-    historial_preguntas_text: Optional[List[str]] = [] 
+    historial_preguntas_text: List[str]
 
-class EvaluacionFinal(BaseModel):
-    respuestas_valores: List[str]
-    tipos_preguntas: List[str]
-    categorias_respondidas: List[str]
-
-# ============================
-# Modelos para guardar en Google Sheets
-# ============================
 class DiagnosticoGuardar(BaseModel):
     Fecha: str
     Estudiante: str
     Edad: int
     Sexo: str
     Facultad: str
-    Score_Ansiedad: float
     Score_Estres: float
-    Score_Burnout: float
-    Score_Total: float
+    Score_Ansiedad: float
+    Score_Agotamiento: float
+    Score_Cinismo: float
+    Score_Eficacia: float
     Alerta: str
     Diagnostico: str
-    Rpta_Ansiedad: str
     Rpta_Estres: str
-    Rpta_Burnout: str
+    Rpta_Ansiedad: str
+    Rpta_Agotamiento: str
+    Rpta_Cinismo: str
+    Rpta_Eficacia: str
 
 class SatisfaccionGuardar(BaseModel):
-    FlujoTipo: str = "SATISFACCION_USUARIO"
     Fecha: str
     Estudiante: str
     Facultad: str
@@ -156,200 +94,205 @@ class SatisfaccionGuardar(BaseModel):
     CoherenciaBot: int
     SugerenciaComentario: str
 
+class DiagnosticoProcesarInput(BaseModel):
+    respuestas_valores: List[str]
+    tipos_preguntas: List[str]
+    categorias_respondidas: List[str]
+
+# ==========================================
+# ENDPOINTS DE CONTROL Y RUTA LOGÍSTICA
+# ==========================================
+
+@app.get("/api/status")
+def home():
+    return {"status": "online", "entorno": "localhost", "mensaje": "Servidor UCV activo localmente"}
+
 @app.get("/primera-pregunta")
-def obtener_primera_pregunta():
-    texto_inicio = obtener_pregunta_aleatoria("inicio")
+def primera_pregunta():
+    """Entrega la pregunta inicial del banco de forma controlada."""
+    pregunta_inicial = obtener_pregunta_aleatoria("inicio", [])
     return {
-        "finalizado": False,
-        "indice_siguiente": 1,
+        "pregunta": pregunta_inicial,
+        "categoria": "inicio",
         "tipo": "texto_libre",
-        "pregunta": texto_inicio,
-        "categoria": "general",
-        "feedback_bot": "¡Hola! Comencemos el análisis adaptativo."
+        "indice_siguiente": 1
     }
 
 @app.post("/procesar-turno")
-def procesar_turno(data: TurnoChat):
-    respuesta = data.valor_respuesta.lower().strip()
-    turno_actual = data.indice_pregunta
-    
-    if turno_actual >= 10:
-        return {"finalizado": True, "indice_siguiente": turno_actual, "tipo": "", "pregunta": "", "categoria": "", "feedback_bot": ""}
+def procesar_turno(entrada: TurnoInput):
+    """Evalúa la respuesta actual, predice con NLP heurístico y entrega la siguiente pregunta."""
+    idx = entrada.indice_pregunta
 
-    prediccion_semantica = "general"
+    # Flujo formal de 10 turnos (1 inicio + 9 preguntas de dimensiones)
+    # 2 de Estrés, 2 de Ansiedad, 2 de Agotamiento, 2 de Cinismo, 1 de Eficacia
+    mapeo_flujo = {
+        1: ("estres_frecuencia", "opciones"),
+        2: ("estres_profunda", "texto_libre"),
+        3: ("ansiedad_frecuencia", "opciones"),
+        4: ("ansiedad_profunda", "texto_libre"),
+        5: ("agotamiento_frecuencia", "opciones"),
+        6: ("agotamiento_profunda", "texto_libre"),
+        7: ("cinismo_frecuencia", "opciones"),
+        8: ("cinismo_profunda", "texto_libre"),
+        9: ("eficacia_frecuencia", "opciones")
+    }
 
-    if not respuesta.isdigit() and len(respuesta) > 4:
-        if modelo_ia and vectorizador:
-            texto_tfidf = vectorizador.transform([respuesta])
-            pred_raw = str(modelo_ia.predict(texto_tfidf)[0]).lower()
-            if "ansiedad" in pred_raw: prediccion_semantica = "ansiedad"
-            elif "estres" in pred_raw or "estrés" in pred_raw: prediccion_semantica = "estres"
-            elif "burnout" in pred_raw: prediccion_semantica = "burnout"
+    if idx > 9:
+        return {"finalizado": True}
 
-    categorias_visitadas = [c for c in data.historial_categorias if c != "general"]
-    dimensiones_faltantes = [d for d in ["ansiedad", "estres", "burnout"] if d not in categorias_visitadas]
-    siguiente_dimension = dimensiones_faltantes[0] if dimensiones_faltantes else "ansiedad"
+    cat_clave, tipo_rpta = mapeo_flujo[idx]
+    pregunta_siguiente = obtener_pregunta_aleatoria(cat_clave, entrada.historial_preguntas_text)
 
-    tipo_pregunta = "opciones"
+    # Generación de feedback empático predictivo adaptado al input del alumno
+    feedback = "Comprendo lo que mencionas. Sigamos analizando tu entorno académico..."
+    val_limpio = entrada.valor_respuesta.lower().strip()
 
-    if turno_actual == 1 or "general" in data.historial_categorias:
-        if prediccion_semantica in dimensiones_faltantes:
-            siguiente_dimension = prediccion_semantica
-        proxima_pregunta_clave = f"{siguiente_dimension}_frecuencia"
+    if tipo_rpta == "opciones":
+        if "3" in val_limpio:
+            feedback = "Lamento que experimentes esta carga casi a diario. Sigamos para evaluar con precisión..."
+        elif "0" in val_limpio:
+            feedback = "Me alegra que esta situación no te afecte. Continuemos con la siguiente pregunta..."
     else:
-        ultima_cat = data.historial_categorias[-1] if data.historial_categorias else "ansiedad"
-        
-        if respuesta.isdigit(): 
-            val = int(respuesta)
-            if val >= 2 and f"{ultima_cat}_profunda" not in categorias_visitadas:
-                proxima_pregunta_clave = f"{ultima_cat}_profunda"
-                tipo_pregunta = "texto_libre"
-            else:
-                proxima_pregunta_clave = f"{siguiente_dimension}_frecuencia"
-        else:
-            proxima_pregunta_clave = f"{siguiente_dimension}_frecuencia"
-
-    if proxima_pregunta_clave in categorias_visitadas and dimensiones_faltantes:
-        proxima_pregunta_clave = f"{dimensiones_faltantes[0]}_frecuencia"
-
-    if "profunda" in proxima_pregunta_clave:
-        tipo_pregunta = "texto_libre"
-
-    # Generar feedback dinámico y empático
-    feedback_bot = generar_feedback_empatico(data.valor_respuesta, prediccion_semantica, proxima_pregunta_clave)
-
-    texto_final_pregunta = obtener_pregunta_aleatoria(proxima_pregunta_clave, data.historial_preguntas_text)
+        if len(val_limpio) > 25:
+            feedback = "Agradezco mucho que compartas esto con tanto detalle, es de gran valor para tu análisis. Sigamos..."
 
     return {
         "finalizado": False,
-        "indice_siguiente": turno_actual + 1,
-        "tipo": tipo_pregunta,
-        "pregunta": texto_final_pregunta,
-        "categoria": proxima_pregunta_clave,
-        "feedback_bot": feedback_bot
+        "pregunta_siguiente": pregunta_siguiente,
+        "categoria_siguiente": cat_clave.split("_")[0],
+        "tipo_siguiente": tipo_rpta,
+        "indice_siguiente": idx + 1,
+        "feedback": feedback
     }
 
-
 @app.post("/diagnostico-final")
-def generar_diagnostico_final(data: EvaluacionFinal):
-    # Inicializar contadores de opciones para cada categoría
-    sum_opciones = {"ansiedad": 0, "estres": 0, "burnout": 0}
-    cant_opciones = {"ansiedad": 0, "estres": 0, "burnout": 0}
-    
-    # Almacenar textos libres por categoría para análisis selectivo por NLP
-    textos_libres = {"ansiedad": [], "estres": [], "burnout": [], "general": []}
-    
-    # Procesar las respuestas recibidas
-    for valor, tipo, cat in zip(data.respuestas_valores, data.tipos_preguntas, data.categorias_respondidas):
-        base_cat = "ansiedad"
-        if "estres" in cat:
-            base_cat = "estres"
-        elif "burnout" in cat:
-            base_cat = "burnout"
-            
+def diagnostico_final(entrada: DiagnosticoProcesarInput):
+    """
+    Computa de manera aislada los porcentajes (0-100%) para las 5 dimensiones clínicas
+    y genera el cierre predictivo del diagnóstico.
+    """
+    dimensiones = ["estres", "ansiedad", "agotamiento", "cinismo", "eficacia"]
+    puntos = {d: 0.0 for d in dimensiones}
+    maximos = {d: 0.0 for d in dimensiones}
+    textos_libres = {d: [] for d in dimensiones}
+
+    for i in range(len(entrada.respuestas_valores)):
+        val = entrada.respuestas_valores[i]
+        cat_sucia = entrada.categorias_respondidas[i].lower()
+        tipo = entrada.tipos_preguntas[i]
+
+        # CORRECCIÓN DE LIMPIEZA: Asegura emparejar "agotamiento_frecuencia" -> "agotamiento"
+        cat = None
+        for d in dimensiones:
+            if d in cat_sucia:
+                cat = d
+                break
+
+        if not cat:
+            continue
+
         if tipo == "opciones":
-            val_int = int(valor) if valor.isdigit() else 0
-            sum_opciones[base_cat] += val_int
-            cant_opciones[base_cat] += 1
+            try:
+                score = float(val)
+                puntos[cat] += score
+                maximos[cat] += 3.0  # El valor de frecuencia máximo es 3
+            except ValueError:
+                pass
         else:
-            textos_libres[base_cat].append(valor.strip())
-            
-    # Calcular puntaje base porcentual a partir de opciones múltiples (0 a 3 mapeado de 0% a 100%)
-    scores = {}
-    for cat in ["ansiedad", "estres", "burnout"]:
-        if cant_opciones[cat] > 0:
-            scores[cat] = (sum_opciones[cat] / (cant_opciones[cat] * 3.0)) * 100.0
-        else:
-            scores[cat] = 0.0
+            textos_libres[cat].append(val)
 
-    # Inicializar y acumular bonificaciones de análisis de texto (NLP)
-    nlp_bonuses = {"ansiedad": 0.0, "estres": 0.0, "burnout": 0.0}
-    
-    # Analizar de manera exclusiva las respuestas de texto libre
-    for cat, textos in textos_libres.items():
-        for texto in textos:
-            if len(texto) > 3:
-                texto_normalizado = texto.lower()
-                
-                # Búsqueda de palabras clave emocionales
-                palabras_ansiedad = ["ansiedad", "inquieto", "inquietud", "pánico", "asfixia", "nervios", "pecho", "taquicardia", "temblor", "miedo", "angustia"]
-                palabras_estres = ["estrés", "estres", "presión", "presion", "carga", "exámenes", "examen", "colapso", "frustración", "frustracion", "irritable"]
-                palabras_burnout = ["burnout", "agotado", "agotada", "cansancio", "sin fuerzas", "desmotivado", "desmotivada", "vacío", "vacio", "apatía", "apatia"]
-                
-                if any(w in texto_normalizado for w in palabras_ansiedad):
-                    nlp_bonuses["ansiedad"] += 10.0
-                if any(w in texto_normalizado for w in palabras_estres):
-                    nlp_bonuses["estres"] += 10.0
-                if any(w in texto_normalizado for w in palabras_burnout):
-                    nlp_bonuses["burnout"] += 10.0
-                
-                # Predicción del modelo de Machine Learning (solo si está cargado)
-                if modelo_ia and vectorizador:
-                    texto_tfidf = vectorizador.transform([texto])
-                    prediccion_ia = str(modelo_ia.predict(texto_tfidf)[0]).lower()
-                    
-                    if "ansiedad" in prediccion_ia:
-                        nlp_bonuses["ansiedad"] += 15.0
-                    elif "estres" in prediccion_ia or "estrés" in prediccion_ia:
-                        nlp_bonuses["estres"] += 15.0
-                    elif "burnout" in prediccion_ia:
-                        nlp_bonuses["burnout"] += 15.0
+    # Procesamiento del vectorizador y modelo IA si están cargados para reajustar pesos clínicos
+    texto_total = " ".join([t for sublist in textos_libres.values() for t in sublist if t])
+    peso_ia_burnout = 0.0
 
-    # Sumar bonificaciones de NLP y acotar el puntaje final en el rango [0, 100]
-    score_ansiedad = min(100.0, max(0.0, scores["ansiedad"] + nlp_bonuses["ansiedad"]))
-    score_estres = min(100.0, max(0.0, scores["estres"] + nlp_bonuses["estres"]))
-    score_burnout = min(100.0, max(0.0, scores["burnout"] + nlp_bonuses["burnout"]))
-    
-    # Determinar el nivel de alerta y conclusión clínica basado en el score máximo obtenido
-    max_score = max(score_ansiedad, score_estres, score_burnout)
-    
-    if max_score < 35.0:
-        conclusion = "El análisis multivariable indica estabilidad emocional óptima (Buen estado / Estable) dentro de los rangos normales."
-        alerta = "Bajo"
-    elif max_score < 60.0:
-        conclusion = "Se observan niveles moderados de carga emocional. Se recomienda seguimiento y prácticas de autocuidado para prevenir el incremento del malestar."
+    if modelo_ia and vectorizador and texto_total.strip():
+        try:
+            vectorizado = vectorizador.transform([texto_total])
+            prediccion = modelo_ia.predict(vectorizado)
+            if prediccion[0] == 1:
+                peso_ia_burnout = 15.0
+        except Exception as e:
+            print(f"Error en inferencia IA: {e}")
+
+    # Normalización matemática y cálculo de porcentajes clínicos reales
+    score_estres = (puntos["estres"] / maximos["estres"] * 100) if maximos["estres"] > 0 else 0.0
+    score_ansiedad = (puntos["ansiedad"] / maximos["ansiedad"] * 100) if maximos["ansiedad"] > 0 else 0.0
+    score_agotamiento = (puntos["agotamiento"] / maximos["agotamiento"] * 100) if maximos["agotamiento"] > 0 else 0.0
+    score_cinismo = (puntos["cinismo"] / maximos["cinismo"] * 100) if maximos["cinismo"] > 0 else 0.0
+    score_eficacia_real = (puntos["eficacia"] / maximos["eficacia"] * 100) if maximos["eficacia"] > 0 else 0.0
+
+    # Si la IA detectó burnout, sumamos el peso de ajuste de manera controlada (máximo 100%)
+    if peso_ia_burnout > 0:
+        score_agotamiento = min(100.0, score_agotamiento + peso_ia_burnout)
+        score_cinismo = min(100.0, score_cinismo + (peso_ia_burnout / 2))
+        score_eficacia_real = max(0.0, score_eficacia_real - (peso_ia_burnout / 2))
+
+    # Definición de niveles clínicos de Alerta
+    alerta = "Bajo"
+    indicadores_riesgo = 0
+
+    if score_estres >= 70: indicadores_riesgo += 1
+    if score_ansiedad >= 70: indicadores_riesgo += 1
+    if score_agotamiento >= 70: indicadores_riesgo += 1
+    if score_cinismo >= 70: indicadores_riesgo += 1
+    if score_eficacia_real <= 35 and maximos["eficacia"] > 0: indicadores_riesgo += 1
+
+    if indicadores_riesgo >= 2:
+        alerta = "Alto"
+    elif indicadores_riesgo == 1 or score_estres >= 50 or score_ansiedad >= 50:
         alerta = "Moderado"
-    else:
-        alerta = "Alto / Crítico"
-        if max_score == score_ansiedad:
-            conclusion = "Se identifican manifestaciones compatibles con Ansiedad Universitaria severa. Se sugiere asistencia psicológica para orientación."
-        elif max_score == score_estres:
-            conclusion = "Los indicadores convergen en niveles elevados de Estrés Académico. Se recomienda reestructurar cargas académicas y organizativas."
-        else:
-            conclusion = "La narrativa y los patrones de frecuencia denotan presencia severa de Burnout Estudiantil, afectando críticamente la motivación intrínseca."
 
-    # Consolidar todos los textos libres para el retorno
-    lista_textos_libres = [t for textos in textos_libres.values() for t in textos if t]
+    if alerta == "Bajo":
+        conclusion = "Tus respuestas reflejan un adecuado equilibrio psicoemocional. Tus estrategias de afrontamiento y tu percepción de eficacia te permiten gestionar las responsabilidades académicas de manera saludable."
+    elif alerta == "Moderado":
+        conclusion = "Se observan indicadores moderados de tensión acumulada o desgaste académico. Es aconsejable implementar pausas activas y organizar tus tiempos para prevenir que aumente el agotamiento."
+    else:
+        conclusion = "Se detectan niveles elevados de sobrecarga y desgaste emocional acumulado. Te sugerimos acudir preventivamente al departamento psicopedagógico de tu facultad para recibir orientación profesional."
 
     return {
         "estres": round(score_estres, 1),
         "ansiedad": round(score_ansiedad, 1),
-        "burnout": round(score_burnout, 1),
+        "agotamiento": round(score_agotamiento, 1),
+        "cinismo": round(score_cinismo, 1),
+        "eficacia": round(score_eficacia_real, 1),
         "conclusion": conclusion,
         "nivel_alerta": alerta,
-        "texto_consolidado_procesado": " | ".join(lista_textos_libres)
+        "rpta_estres": " | ".join(textos_libres["estres"]),
+        "rpta_ansiedad": " | ".join(textos_libres["ansiedad"]),
+        "rpta_agotamiento": " | ".join(textos_libres["agotamiento"]),
+        "rpta_cinismo": " | ".join(textos_libres["cinismo"]),
+        "rpta_eficacia": " | ".join(textos_libres["eficacia"])
     }
 
 
-# ============================
-# ENDPOINTS: Conexión con Google Sheets (vía Apps Script)
-# ============================
+# ==========================================
+# ENVÍO SEGURO DE REGISTROS A SHEETS (vía Apps Script)
+# ==========================================
 @app.post("/guardar-diagnostico")
 def guardar_diagnostico(data: DiagnosticoGuardar):
-    """El frontend llama a esto en vez de golpear Google Apps Script directamente."""
-    resultado = enviar_a_sheets(data.dict())
+    """Enruta y consolida los datos guardándolos en Google Sheets."""
+    datos_dict = data.model_dump() if hasattr(data, "model_dump") else data.dict()
+    resultado = enviar_a_sheets(datos_dict)
     return resultado
 
 @app.post("/guardar-satisfaccion")
 def guardar_satisfaccion(data: SatisfaccionGuardar):
-    """El frontend llama a esto en vez de golpear Google Apps Script directamente."""
-    resultado = enviar_a_sheets(data.dict())
+    """Enruta la encuesta de satisfacción hacia Google Sheets."""
+    datos_dict = data.model_dump() if hasattr(data, "model_dump") else data.dict()
+    resultado = enviar_a_sheets(datos_dict)
     return resultado
 
 @app.get("/metricas-dashboard")
 def metricas_dashboard():
-    """El dashboard llama a esto para leer los datos reales del Google Sheet."""
+    """Lee y entrega las métricas globales para alimentar tu panel."""
     return obtener_metricas_sheets()
 
+# Montaje condicional de estáticos para evitar que falle si la carpeta "frontend" no existe localmente
+ruta_frontend = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend"))
+if not os.path.exists(ruta_frontend):
+    ruta_frontend = os.path.join(os.path.dirname(__file__), "frontend")
 
-app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
+if os.path.exists(ruta_frontend):
+    app.mount("/", StaticFiles(directory=ruta_frontend, html=True), name="frontend")
+else:
+    print(f"⚠️ Advertencia: No se encontró la carpeta estática en {ruta_frontend}. Iniciando solo como API.")

@@ -25,7 +25,9 @@ registros_procesados = []
 
 keywords_estres = ["estrés", "estres", "presión", "presion", "abrumado", "carga", "exámenes", "universidad", "estudios"]
 keywords_ansiedad = ["ansiedad", "miedo", "asustado", "nervioso", "pánico", "panico", "preocupado", "asfixia", "temblor"]
-keywords_burnout = ["agotado", "cansado", "sin fuerzas", "quemado", "burnout", "desmotivado", "rendir", "rutina", "fatiga"]
+keywords_agotamiento = ["agotado", "cansado", "exhausto", "sin fuerzas", "fatiga", "vacío", "dormir", "desvelo", "insomnio"]
+keywords_cinismo = ["cinismo", "indiferente", "desmotivado", "distante", "utilidad", "sin sentido", "desinterés", "apatía", "apático", "cuestiono"]
+keywords_eficacia = ["eficaz", "estimulado", "logro", "meta", "capaz", "éxito", "orgulloso", "rendir", "confianza", "seguro"]
 
 print("🧹 Procesando el árbol de diálogos y aplicando reglas psicológicas...")
 
@@ -54,9 +56,11 @@ for index, row in df_raw.iterrows():
     
     cont_estres = sum(1 for kw in keywords_estres if kw in texto_minuscula)
     cont_ansiedad = sum(1 for kw in keywords_ansiedad if kw in texto_minuscula)
-    cont_burnout = sum(1 for kw in keywords_burnout if kw in texto_minuscula)
+    cont_agotamiento = sum(1 for kw in keywords_agotamiento if kw in texto_minuscula)
+    cont_cinismo = sum(1 for kw in keywords_cinismo if kw in texto_minuscula)
+    cont_eficacia = sum(1 for kw in keywords_eficacia if kw in texto_minuscula)
     
-    max_cont = max(cont_estres, cont_ansiedad, cont_burnout)
+    max_cont = max(cont_estres, cont_ansiedad, cont_agotamiento, cont_cinismo, cont_eficacia)
     
     if max_cont > 0:
         if max_cont == cont_estres:
@@ -65,9 +69,15 @@ for index, row in df_raw.iterrows():
         elif max_cont == cont_ansiedad:
             categoria = "Ansiedad (DASS-21)"
             nivel_riesgo = "Moderado" if cont_ansiedad == 1 else "Crítico"
+        elif max_cont == cont_agotamiento:
+            categoria = "Agotamiento Emocional (MBI-SS)"
+            nivel_riesgo = "Moderado" if cont_agotamiento == 1 else "Crítico"
+        elif max_cont == cont_cinismo:
+            categoria = "Cinismo (MBI-SS)"
+            nivel_riesgo = "Moderado" if cont_cinismo == 1 else "Crítico"
         else:
-            categoria = "Burnout Estudiantil (MBI-SS)"
-            nivel_riesgo = "Moderado" if cont_burnout == 1 else "Crítico"
+            categoria = "Eficacia Académica (MBI-SS)"
+            nivel_riesgo = "Moderado" if cont_eficacia == 1 else "Crítico"
 
     registros_procesados.append({
         "id_registro": len(registros_procesados) + 1,

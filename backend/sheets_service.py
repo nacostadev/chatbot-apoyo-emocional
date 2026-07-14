@@ -1,7 +1,6 @@
 import requests
 
-# URL de tu Apps Script (la misma que usabas antes en app.js)
-URL_GOOGLE_SHEETS = "https://script.google.com/macros/s/AKfycbyQ6zKqSdBUgc7ddXIF6ycPaTCpfpXIT0WauUEZHEtbUjge43tUTXcJf0_yxZWF8_LP/exec"
+URL_GOOGLE_SHEETS = "https://script.google.com/macros/s/AKfycbxqebTjsWoi_PbF9Z8ugEVJKJMv5-_dqy6-LeexNnGROiObj-OI5YZHB5oLw6AzmvNu/exec"
 
 
 def enviar_a_sheets(datos: dict) -> dict:
