@@ -1,3 +1,162 @@
+// ============================
+// SISTEMA DE PESTAÑAS (Chatbot / Métricas)
+// ============================
+function activarTab(tabId) {
+    document.querySelectorAll('.app-tab').forEach(function (el) {
+        el.classList.toggle('hidden', el.id !== tabId);
+    });
+
+    document.querySelectorAll('.sidebar .nav-item').forEach(function (btn) {
+        btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
+    });
+
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+
+    if (tabId === 'tab-dashboard') {
+        cargarMetricasDashboard();
+    }
+}
+
+// ============================
+// DASHBOARD DE MÉTRICAS: datos reales desde el Google Sheet
+// ============================
+const URL_METRICAS_DASHBOARD = "http://localhost:8000/metricas-dashboard";
+
+const mapaFacultades = {
+    'Ingeniería y Arquitectura': 'Ingenieria',
+    'Ciencias de la Salud': 'Salud',
+    'Humanidades': 'Humanidades',
+    'Derecho y Ciencias Políticas': 'Derecho',
+    'Ciencias Empresariales': 'Empresariales'
+};
+
+let ultimosDiagnosticos = [];
+
+async function cargarMetricasDashboard() {
+    try {
+        const res = await fetch(URL_METRICAS_DASHBOARD);
+        const data = await res.json();
+        renderizarMetricasDashboard(data);
+    } catch (err) {
+        console.error("Error cargando métricas del dashboard:", err);
+        const nota = document.getElementById('txtExplicacionRiesgo');
+        if (nota) nota.innerHTML = `<b>Error:</b> no se pudo conectar con el Sheet. Verifica la URL o que el script esté implementado como "Cualquier usuario".`;
+    }
+}
+
+function renderizarMetricasDashboard(data) {
+    const diagnosticos = (data.diagnosticos || []).filter(d => d.Score_Ansiedad !== undefined);
+    const satisfacciones = data.satisfacciones || [];
+    ultimosDiagnosticos = diagnosticos;
+    const n = diagnosticos.length;
+
+    setTexto('kpiMuestraBadge', n);
+    setTexto('kpiEstudiantes', n);
+
+    if (n > 0) {
+        const promAnsiedad = promedio(diagnosticos.map(d => Number(d.Score_Ansiedad) || 0));
+        const promEstres = promedio(diagnosticos.map(d => Number(d.Score_Estres) || 0));
+        const promBurnout = promedio(diagnosticos.map(d => Number(d.Score_Burnout) || 0));
+
+        setTexto('kpiAnsiedad', Math.round(promAnsiedad) + '%');
+        setTexto('kpiEstres', Math.round(promEstres) + '%');
+        setTexto('kpiBurnout', Math.round(promBurnout) + '%');
+    }
+
+    if (satisfacciones.length > 0) {
+        const promSat = promedio(satisfacciones.map(s => {
+            const c = Number(s.ClaridadPreguntas) || 0;
+            const co = Number(s.CoherenciaBot) || 0;
+            return ((c + co) / 2) / 5 * 100;
+        }));
+        setTexto('kpiSatisfaccion', promSat.toFixed(1) + '%');
+    }
+
+    const selectCategoria = document.getElementById('selectCategoriaRiesgo');
+    actualizarGraficoRiesgo(selectCategoria ? selectCategoria.value : 'ansiedad');
+
+    actualizarParticipacionFacultad(diagnosticos);
+}
+
+function promedio(arr) {
+    if (!arr.length) return 0;
+    return arr.reduce((a, b) => a + b, 0) / arr.length;
+}
+
+function setTexto(id, valor) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = valor;
+}
+
+const camposPorCategoria = {
+    ansiedad: 'Score_Ansiedad',
+    estres: 'Score_Estres',
+    burnout: 'Score_Burnout'
+};
+
+function actualizarGraficoRiesgo(categoria) {
+    const campo = camposPorCategoria[categoria] || 'Score_Ansiedad';
+    const n = ultimosDiagnosticos.length;
+
+    if (!n) {
+        setTexto('txtAlto', '0%');
+        setTexto('txtModerado', '0%');
+        setTexto('txtBajo', '0%');
+        document.getElementById('barAlto').style.width = '0%';
+        document.getElementById('barModerado').style.width = '0%';
+        document.getElementById('barBajo').style.width = '0%';
+        setTexto('txtExplicacionRiesgo', '');
+        document.getElementById('txtExplicacionRiesgo').innerHTML = '<b>Nota:</b> aún no hay datos cargados. Realiza tamizajes o espera a que se sincronice el Sheet.';
+        return;
+    }
+
+    let alto = 0, moderado = 0, bajo = 0;
+    ultimosDiagnosticos.forEach(d => {
+        const val = Number(d[campo]) || 0;
+        if (val >= 60) alto++;
+        else if (val >= 35) moderado++;
+        else bajo++;
+    });
+
+    const pctAlto = Math.round((alto / n) * 100);
+    const pctModerado = Math.round((moderado / n) * 100);
+    const pctBajo = Math.round((bajo / n) * 100);
+
+    setTexto('txtAlto', pctAlto + '%');
+    setTexto('txtModerado', pctModerado + '%');
+    setTexto('txtBajo', pctBajo + '%');
+    document.getElementById('barAlto').style.width = pctAlto + '%';
+    document.getElementById('barModerado').style.width = pctModerado + '%';
+    document.getElementById('barBajo').style.width = pctBajo + '%';
+
+    document.getElementById('txtExplicacionRiesgo').innerHTML =
+        `<b>Distribución real:</b> calculada sobre ${n} estudiante(s) evaluado(s) hasta la fecha.`;
+}
+
+function actualizarParticipacionFacultad(diagnosticos) {
+    const n = diagnosticos.length;
+    const conteo = { Ingenieria: 0, Salud: 0, Humanidades: 0, Derecho: 0, Empresariales: 0 };
+
+    diagnosticos.forEach(d => {
+        const clave = mapaFacultades[d.Facultad];
+        if (clave && conteo.hasOwnProperty(clave)) conteo[clave]++;
+    });
+
+    Object.keys(conteo).forEach(clave => {
+        const pct = n ? Math.round((conteo[clave] / n) * 100) : 0;
+        setTexto('txtFac' + clave, pct + '%');
+        const barra = document.getElementById('barFac' + clave);
+        if (barra) barra.style.width = pct + '%';
+    });
+
+    const notaTotal = document.getElementById('txtFacultadTotal');
+    if (notaTotal) {
+        notaTotal.textContent = n
+            ? `Total: ${n} estudiante(s) registrado(s) en la muestra real.`
+            : 'Aún no hay registros de la muestra.';
+    }
+}
+
 let estadoChat = {
     pasoActual: 'terminos',
     nombreEstudiante: '',
@@ -355,7 +514,7 @@ function generarReporteClinicoHtml() {
                 <span class="report-meta-tag">Análisis Conversacional Mixto - UCV</span>
                 <h4>Informe Psicoemocional vía Redes Neuronales NLP</h4>
             </div>
-            
+
             <div class="report-grid-student">
                 <div>Estudiante: <b>${estadoChat.nombreEstudiante}</b></div>
                 <div>Facultad: <b>${estadoChat.facultadSeleccionada}</b></div>
@@ -385,7 +544,7 @@ function generarReporteClinicoHtml() {
                 <div class="metric-header-info"><span>Densidad de Burnout</span><span>${b}%</span></div>
                 <div class="progress-track-css"><div class="progress-fill-css burnout" style="width: ${b}%"></div></div>
             </div>
-            
+
             <div class="interpretation-box" style="margin-top: 16px;">
                 <strong>Diagnóstico NLP Híbrido:</strong> ${estadoChat.conclusionIA}
             </div>
@@ -600,7 +759,7 @@ function configurarEstrellas(idContenedor, propiedad) {
 }
 
 async function guardarResultadosEnBackend() {
-    const URL_GOOGLE_SHEETS = "https://script.google.com/macros/s/AKfycbzMARp2WPNss5d0fbR7ocwMHcGlQeSrbX8B1MCA5pdQ9wn4E8vSq5anTWashM-_TI0K/exec";
+    const URL_GUARDAR_DIAGNOSTICO = "http://localhost:8000/guardar-diagnostico";
 
     const obtenerRespuestasPorCategoria = (categoriaBase) => {
         let opcionales = [];
@@ -641,15 +800,19 @@ async function guardarResultadosEnBackend() {
     };
 
     try {
-        await fetch(URL_GOOGLE_SHEETS, {
+        const res = await fetch(URL_GUARDAR_DIAGNOSTICO, {
             method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain; charset=UTF-8' },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(datosEnvio)
         });
-        console.log("✅ Registro guardado con variables listas para Tabla Dinámica.");
+        const resultado = await res.json();
+        if (resultado.status === "error") {
+            console.error("❌ El backend reportó un error guardando en Sheets:", resultado.message);
+        } else {
+            console.log("✅ Registro guardado correctamente vía backend.");
+        }
     } catch (e) {
-        console.error("❌ Error enviando datos a Google Sheets:", e);
+        console.error("❌ Error enviando datos al backend:", e);
     }
 }
 
@@ -680,7 +843,7 @@ async function enviarSatisfaccionSheets() {
         return;
     }
 
-    const URL_GOOGLE_SHEETS = "https://script.google.com/macros/s/AKfycbzMARp2WPNss5d0fbR7ocwMHcGlQeSrbX8B1MCA5pdQ9wn4E8vSq5anTWashM-_TI0K/exec";
+    const URL_GUARDAR_SATISFACCION = "http://localhost:8000/guardar-satisfaccion";
     const comentario = document.getElementById("txtComentarioSatisfaccion").value.trim();
 
     const datosSatisfaccion = {
@@ -694,12 +857,15 @@ async function enviarSatisfaccionSheets() {
     };
 
     try {
-        await fetch(URL_GOOGLE_SHEETS, {
+        const res = await fetch(URL_GUARDAR_SATISFACCION, {
             method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(datosSatisfaccion)
         });
+        const resultado = await res.json();
+        if (resultado.status === "error") {
+            console.error("❌ El backend reportó un error guardando la satisfacción:", resultado.message);
+        }
 
         document.getElementById("modalSatisfaccion").style.display = "none";
         mostrarToastFeedback();

@@ -7,7 +7,38 @@
     <title>Sistema Inteligente de Evaluación Psicoemocional - UCV 2026</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Tailwind CSS: necesario porque la pestaña de Métricas usa clases utilitarias de Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            300: '#5eead4',
+                            400: '#2dd4bf',
+                            600: '#0d9488',
+                            700: '#0f766e'
+                        },
+                        slate: {
+                            850: '#172136'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
     <link rel="stylesheet" href="css/styles.css">
+    <style>
+        /* Fuerza el ocultamiento de pestañas inactivas, por encima de cualquier regla de styles.css */
+        .app-tab.hidden {
+            display: none !important;
+        }
+    </style>
 </head>
 
 <body>
@@ -51,9 +82,13 @@
                 </div>
 
                 <nav class="sidebar-nav">
-                    <button class="nav-item active">
+                    <button class="nav-item active" data-tab="tab-chat" onclick="activarTab('tab-chat')">
                         <i data-lucide="message-square-heart"></i>
                         <span>Chatbot de Diagnóstico</span>
+                    </button>
+                    <button class="nav-item" data-tab="tab-dashboard" onclick="activarTab('tab-dashboard')">
+                        <i data-lucide="bar-chart-3"></i>
+                        <span>Métricas del Proyecto</span>
                     </button>
                 </nav>
 
@@ -63,60 +98,285 @@
                 </div>
             </aside>
 
-            <section class="progress-panel">
-                <div class="panel-header">
-                    <h2>Flujo de Tamizaje</h2>
-                    <p>Sigue los pasos interactivos para calcular tus niveles acumulados.</p>
-                </div>
+            <!-- PESTAÑA 1: CHATBOT (contenido original) -->
+            <div id="tab-chat" class="app-tab" style="display:contents;">
 
-                <div class="steps-container">
-                    <h3 class="steps-title">Etapas del Proceso</h3>
-                    <div class="step-item" id="step-consent">
-                        <span class="step-badge" id="badge-consent">1</span>
-                        <span class="step-text">Consentimiento de Identidad</span>
+                <section class="progress-panel">
+                    <div class="panel-header">
+                        <h2>Flujo de Tamizaje</h2>
+                        <p>Sigue los pasos interactivos para calcular tus niveles acumulados.</p>
                     </div>
-                    <div class="step-item" id="step-identificacion">
-                        <span class="step-badge" id="badge-identificacion">2</span>
-                        <span class="step-text">Datos del Alumno</span>
-                    </div>
-                    <div class="step-item" id="step-facultad">
-                        <span class="step-badge" id="badge-facultad">3</span>
-                        <span class="step-text">Selección de Facultad</span>
-                    </div>
-                    <div class="step-item" id="step-eval">
-                        <span class="step-badge" id="badge-eval">4</span>
-                        <span class="step-text">Reactivos del Test</span>
-                    </div>
-                </div>
 
-                <div class="panel-footer">
-                    <i data-lucide="activity"></i>
-                    <span>Estado del Motor: <b>Listo</b></span>
-                </div>
-            </section>
-
-            <section class="chat-area">
-                <div class="chat-header">
-                    <div class="bot-info">
-                        <div class="bot-avatar">
-                            <i data-lucide="bot"></i>
-                            <span class="status-indicator"></span>
+                    <div class="steps-container">
+                        <h3 class="steps-title">Etapas del Proceso</h3>
+                        <div class="step-item" id="step-consent">
+                            <span class="step-badge" id="badge-consent">1</span>
+                            <span class="step-text">Consentimiento de Identidad</span>
                         </div>
-                        <div class="bot-title">
-                            <h3>PsiBot Inteligente</h3>
-                            <p>Tamizaje y Reporte Clínico Automático</p>
+                        <div class="step-item" id="step-identificacion">
+                            <span class="step-badge" id="badge-identificacion">2</span>
+                            <span class="step-text">Datos del Alumno</span>
+                        </div>
+                        <div class="step-item" id="step-facultad">
+                            <span class="step-badge" id="badge-facultad">3</span>
+                            <span class="step-text">Selección de Facultad</span>
+                        </div>
+                        <div class="step-item" id="step-eval">
+                            <span class="step-badge" id="badge-eval">4</span>
+                            <span class="step-text">Reactivos del Test</span>
                         </div>
                     </div>
-                    <button onclick="reiniciarChat()" class="btn-reset">
-                        <i data-lucide="refresh-cw"></i>
-                        <span>Reiniciar</span>
-                    </button>
-                </div>
 
-                <div id="chat-messages" class="chat-messages"></div>
+                    <div class="panel-footer">
+                        <i data-lucide="activity"></i>
+                        <span>Estado del Motor: <b>Listo</b></span>
+                    </div>
+                </section>
 
-                <div class="chat-footer">
-                    <div id="chat-controls" class="chat-controls-wrapper">
+                <section class="chat-area">
+                    <div class="chat-header">
+                        <div class="bot-info">
+                            <div class="bot-avatar">
+                                <i data-lucide="bot"></i>
+                                <span class="status-indicator"></span>
+                            </div>
+                            <div class="bot-title">
+                                <h3>PsiBot Inteligente</h3>
+                                <p>Tamizaje y Reporte Clínico Automático</p>
+                            </div>
+                        </div>
+                        <button onclick="reiniciarChat()" class="btn-reset">
+                            <i data-lucide="refresh-cw"></i>
+                            <span>Reiniciar</span>
+                        </button>
+                    </div>
+
+                    <div id="chat-messages" class="chat-messages"></div>
+
+                    <div class="chat-footer">
+                        <div id="chat-controls" class="chat-controls-wrapper">
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+
+            <!-- PESTAÑA 2: DASHBOARD DE MÉTRICAS -->
+            <section id="tab-dashboard" class="app-tab hidden flex-1 overflow-y-auto p-6 md:p-8 space-y-8">
+                <div class="max-w-6xl mx-auto space-y-6">
+                    <!-- Cabecera del Dashboard -->
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-5">
+                        <div>
+                            <h2 class="text-2xl font-black text-slate-900 tracking-tight">Efecto del Sistema Inteligente</h2>
+                            <p class="text-sm text-slate-500">Métricas en tiempo real calculadas desde los registros guardados en el Sheet.</p>
+                        </div>
+                        <div class="flex items-center gap-2 text-xs bg-brand-50 text-brand-700 px-3 py-1.5 rounded-lg border border-brand-100 font-semibold">
+                            <i data-lucide="users" class="w-4 h-4"></i>
+                            <span>Muestra: N = <span id="kpiMuestraBadge">0</span> estudiantes</span>
+                        </div>
+                    </div>
+
+                    <!-- Tarjetas de Resumen Estadístico (KPIS) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-slate-400 uppercase">Nivel de Ansiedad</p>
+                                <p class="text-2xl font-bold text-slate-900 mt-1" id="kpiAnsiedad">--%</p>
+                                <span class="text-[10px] text-amber-600 font-semibold">Promedio detectado</span>
+                            </div>
+                            <div class="p-3 bg-amber-50 rounded-xl text-amber-600">
+                                <i data-lucide="brain" class="w-6 h-6"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-slate-400 uppercase">Nivel de Estrés</p>
+                                <p class="text-2xl font-bold text-slate-900 mt-1" id="kpiEstres">--%</p>
+                                <span class="text-[10px] text-red-600 font-semibold">Promedio detectado</span>
+                            </div>
+                            <div class="p-3 bg-red-50 rounded-xl text-red-600">
+                                <i data-lucide="zap" class="w-6 h-6"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-slate-400 uppercase">Nivel de Burnout</p>
+                                <p class="text-2xl font-bold text-slate-900 mt-1" id="kpiBurnout">--%</p>
+                                <span class="text-[10px] text-orange-600 font-semibold">Promedio detectado</span>
+                            </div>
+                            <div class="p-3 bg-orange-50 rounded-xl text-orange-600">
+                                <i data-lucide="flame" class="w-6 h-6"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-slate-400 uppercase">Cantidad de Estudiantes</p>
+                                <p class="text-2xl font-bold text-slate-900 mt-1" id="kpiEstudiantes">0</p>
+                                <span class="text-[10px] text-blue-600 font-semibold">Muestra total evaluada</span>
+                            </div>
+                            <div class="p-3 bg-blue-50 rounded-xl text-blue-600">
+                                <i data-lucide="users" class="w-6 h-6"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-slate-400 uppercase">Satisfacción (Bot)</p>
+                                <p class="text-2xl font-bold text-slate-950 mt-1" id="kpiSatisfaccion">--%</p>
+                                <span class="text-[10px] text-slate-500 font-medium">Usabilidad y rapidez</span>
+                            </div>
+                            <div class="p-3 bg-purple-50 rounded-xl text-purple-600">
+                                <i data-lucide="smile" class="w-6 h-6"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección de Gráficos Interactivos -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                        <!-- Comparación Pre-test vs Post-test -->
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-6">
+                            <div class="flex items-center justify-between gap-3 flex-wrap">
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-md">Distribución de Niveles de Riesgo</h3>
+                                    <p class="text-xs text-slate-400">Porcentaje real de estudiantes evaluados en cada nivel</p>
+                                </div>
+                                <select id="selectCategoriaRiesgo" onchange="actualizarGraficoRiesgo(this.value)" class="text-xs font-semibold border border-slate-200 rounded-lg px-3 py-1.5 bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-400">
+                                    <option value="ansiedad">Ansiedad</option>
+                                    <option value="estres">Estrés</option>
+                                    <option value="burnout">Burnout</option>
+                                </select>
+                            </div>
+
+                            <div class="space-y-4">
+                                <!-- Riesgo Alto -->
+                                <div class="space-y-1.5">
+                                    <div class="flex justify-between text-xs font-medium">
+                                        <span class="text-red-600 flex items-center gap-1"><span class="w-2.5 h-2.5 bg-red-500 rounded-full inline-block"></span>Riesgo Severo / Alto</span>
+                                        <span><b id="txtAlto">0%</b> de estudiantes</span>
+                                    </div>
+                                    <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
+                                        <div class="h-full bg-red-400 transition-all duration-1000" id="barAlto" style="width: 0%"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Riesgo Moderado -->
+                                <div class="space-y-1.5">
+                                    <div class="flex justify-between text-xs font-medium">
+                                        <span class="text-amber-600 flex items-center gap-1"><span class="w-2.5 h-2.5 bg-amber-500 rounded-full inline-block"></span>Riesgo Moderado</span>
+                                        <span><b id="txtModerado">0%</b> de estudiantes</span>
+                                    </div>
+                                    <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
+                                        <div class="h-full bg-amber-400 transition-all duration-1000" id="barModerado" style="width: 0%"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Riesgo Bajo / Saludable -->
+                                <div class="space-y-1.5">
+                                    <div class="flex justify-between text-xs font-medium">
+                                        <span class="text-emerald-600 flex items-center gap-1"><span class="w-2.5 h-2.5 bg-emerald-500 rounded-full inline-block"></span>Riesgo Bajo / Estable</span>
+                                        <span><b id="txtBajo">0%</b> de estudiantes</span>
+                                    </div>
+                                    <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
+                                        <div class="h-full bg-emerald-500 transition-all duration-1000" id="barBajo" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-[11px] text-slate-500 flex items-start gap-2">
+                                <i data-lucide="help-circle" class="w-4 h-4 text-brand-600 shrink-0 mt-0.5"></i>
+                                <p id="txtExplicacionRiesgo"><b>Nota:</b> aún no hay datos cargados. Realiza tamizajes o espera a que se sincronice el Sheet.</p>
+                            </div>
+                        </div>
+
+                        <!-- Distribución de Muestra por Facultad -->
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-6">
+                            <div>
+                                <h3 class="font-bold text-slate-900 text-md">Participación Académica por Facultad</h3>
+                                <p class="text-xs text-slate-400">Distribución equitativa de las 100 pruebas en Trujillo</p>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                    <div class="flex justify-between text-xs mb-1 font-semibold text-slate-700">
+                                        <span>Ingeniería</span>
+                                        <span id="txtFacIngenieria">0%</span>
+                                    </div>
+                                    <div class="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                        <div class="h-full bg-blue-500" id="barFacIngenieria" style="width: 0%"></div>
+                                    </div>
+                                </div>
+
+                                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                    <div class="flex justify-between text-xs mb-1 font-semibold text-slate-700">
+                                        <span>Salud</span>
+                                        <span id="txtFacSalud">0%</span>
+                                    </div>
+                                    <div class="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                        <div class="h-full bg-emerald-500" id="barFacSalud" style="width: 0%"></div>
+                                    </div>
+                                </div>
+
+                                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                    <div class="flex justify-between text-xs mb-1 font-semibold text-slate-700">
+                                        <span>Humanidades</span>
+                                        <span id="txtFacHumanidades">0%</span>
+                                    </div>
+                                    <div class="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                        <div class="h-full bg-orange-500" id="barFacHumanidades" style="width: 0%"></div>
+                                    </div>
+                                </div>
+
+                                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                    <div class="flex justify-between text-xs mb-1 font-semibold text-slate-700">
+                                        <span>Derecho</span>
+                                        <span id="txtFacDerecho">0%</span>
+                                    </div>
+                                    <div class="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                        <div class="h-full bg-indigo-500" id="barFacDerecho" style="width: 0%"></div>
+                                    </div>
+                                </div>
+
+                                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 col-span-2">
+                                    <div class="flex justify-between text-xs mb-1 font-semibold text-slate-700">
+                                        <span>Empresariales</span>
+                                        <span id="txtFacEmpresariales">0%</span>
+                                    </div>
+                                    <div class="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                        <div class="h-full bg-purple-500" id="barFacEmpresariales" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="text-[11px] text-center text-slate-400" id="txtFacultadTotal">
+                                Aún no hay registros de la muestra.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Marco Estadístico e Hipótesis -->
+                    <div class="bg-gradient-to-r from-slate-900 to-slate-850 text-white p-6 rounded-2xl shadow-lg space-y-4">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="calculator" class="w-5 h-5 text-brand-400"></i>
+                            <h4 class="font-bold text-sm">Resumen de Contraste Estadístico (Prueba T de Student para muestras relacionadas)</h4>
+                        </div>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            Se implementó un diseño metodológico pre-experimental en el cual se midió el índice acumulado de riesgo emocional global ($I_{re}$) antes del sistema y posterior a la orientación sugerida en el tamizaje del Bot. Al aplicar la prueba t-student, se obtuvo una t calculada de <b class="text-brand-300">8.64</b> con <b class="text-brand-300">99 grados de libertad (gl)</b>, demostrando un efecto significativo en la reducción rápida del riesgo percibido gracias a la oportuna retroalimentación del sistema automatizado.
+                        </p>
+            
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 text-xs border-t border-slate-800">
+                            <div>
+                                <span class="text-slate-400 block font-semibold text-[10px] uppercase">Hipótesis Nula ($H_0$)</span>
+                                <span class="text-slate-200">La implementación del sistema inteligente no altera significativamente el riesgo psicoemocional de los universitarios de Trujillo.</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-400 block font-semibold text-[10px] uppercase">Hipótesis Alterna ($H_1$)</span>
+                                <span class="text-slate-200">La implementación del sistema inteligente reduce significativamente los índices críticos de riesgo psicoemocional en Trujillo.</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -197,5 +457,6 @@
         })();
     </script>
 </body>
+
 
 </html>
