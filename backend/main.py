@@ -327,20 +327,14 @@ def generar_diagnostico_final(data: EvaluacionFinal):
                     elif "burnout" in prediccion_ia:
                         nlp_bonuses["agotamiento"] += 15.0
 
-    # Sumar bonificaciones de NLP y acotar el puntaje final en el rango [0, 100]
     score_ansiedad = min(100.0, max(0.0, scores["ansiedad"] + nlp_bonuses["ansiedad"]))
     score_estres = min(100.0, max(0.0, scores["estres"] + nlp_bonuses["estres"]))
     score_agotamiento = min(100.0, max(0.0, scores["agotamiento"] + nlp_bonuses["agotamiento"]))
     score_cinismo = min(100.0, max(0.0, scores["cinismo"] + nlp_bonuses["cinismo"]))
 
-    # Eficacia se interpreta al revés: en el MBI-SS, un puntaje BAJO de eficacia
-    # percibida es la señal de alerta (no un puntaje alto). Guardamos el score
-    # "crudo" tal como se responde, y usamos su inverso solo para la alerta general.
     score_eficacia = min(100.0, max(0.0, scores["eficacia"] + nlp_bonuses["eficacia"]))
     riesgo_por_baja_eficacia = 100.0 - score_eficacia
 
-    # Determinar el nivel de alerta y conclusión clínica basado en el score máximo obtenido
-    # (para Eficacia se usa su riesgo invertido, no el score crudo)
     puntajes_riesgo = {
         "ansiedad": score_ansiedad,
         "estres": score_estres,
