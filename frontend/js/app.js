@@ -146,15 +146,15 @@ async function ejecutarFlujo() {
 
         case 'reporte':
             controls.innerHTML = `
-                <div class="flex-row-layout" style="flex-wrap: wrap; gap: 10px; justify-content: center;">
-                    <button onclick="seleccionarOpcionCierre('informarse')" class="btn-secondary">
-                        <i data-lucide="book-open"></i> Informarme
+                <div class="flex-row-layout" style="flex-wrap: wrap; gap: 10px; justify-content: center; padding: 10px;">
+                    <button onclick="seleccionarOpcionCierre('informarse')" class="btn-secondary" style="flex: 1; min-width: 120px; background: #e2e8f0; color: #334155; border: none; font-weight: 600;">
+                        <i data-lucide="book-open"></i> Informarse
                     </button>
-                    <button onclick="seleccionarOpcionCierre('apoyo')" class="btn-secondary">
-                        <i data-lucide="life-buoy"></i> Buscar Apoyo
+                    <button onclick="seleccionarOpcionCierre('apoyo')" class="btn-secondary" style="flex: 1; min-width: 120px; background: #e2e8f0; color: #334155; border: none; font-weight: 600;">
+                        <i data-lucide="phone"></i> Apoyo UCV
                     </button>
-                    <button onclick="finalizarTamizajeYApagarBot()" class="btn-primary">
-                        <i data-lucide="log-out"></i> Salir
+                    <button onclick="modalSatisfaccion()" class="btn-primary" style="flex: 1.5; min-width: 150px; background: #0f766e; color: white; border: none; font-weight: 600;">
+                        <i data-lucide="heart"></i> Finalizar Chat
                     </button>
                 </div>
             `;
@@ -343,18 +343,8 @@ async function procesarDiagnosticoFinalNLP() {
         estadoChat.rptaCinismo = diag.rpta_cinismo || "";
         estadoChat.rptaEficacia = diag.rpta_eficacia || "";
 
-        // 1. Renderizar el reporte clínico en pantalla de inmediato
-        generarReporteClinicoHtml();
-
-        // 2. Deshabilitar los controles de escritura de manera amigable
-        const controls = document.getElementById('chat-controls');
-        if (controls) {
-            controls.innerHTML = `
-                <div style="text-align: center; color: #0f766e; font-size: 0.85rem; padding: 12px; font-weight: 600;">
-                    🔒 Tamizaje finalizado y evaluado por Inteligencia Emocional.
-                </div>
-            `;
-        }
+        // 1. Renderizar el reporte clínico en pantalla y actualizar botones
+        ejecutarFlujo();
 
         // 3. Registrar en Google Sheets en segundo plano (si falla, el reporte ya se muestra en pantalla)
         guardarDiagnosticoEnSheets();
@@ -476,107 +466,61 @@ function generarReporteClinicoHtml() {
     const getColorBarra = (val) => val > 70 ? '#ef4444' : (val > 35 ? '#f59e0b' : '#10b981');
     const getColorEficacia = (val) => val < 40 ? '#ef4444' : (val < 70 ? '#f59e0b' : '#10b981');
 
+    const burnoutScore = Math.round((p.agotamiento + p.cinismo) / 2);
+
     let html = `
-    <div class="reporte-final-anim" style="background:#ffffff; border: 1px solid #e2e8f0; border-radius:16px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05); padding:24px; width:100%; max-width:650px; margin: 15px auto; font-family: 'Plus Jakarta Sans', sans-serif;">
+    <div style="font-family: 'Plus Jakarta Sans', sans-serif;">
+        <div style="margin-bottom: 20px;">
+            <p style="color: #94a3b8; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; margin: 0 0 4px 0; letter-spacing: 0.05em;">ANÁLISIS CONVERSACIONAL MIXTO – UCV</p>
+            <h2 style="color: #1e293b; margin: 0; font-size: 1.05rem; font-weight: 800; letter-spacing: -0.01em;">Informe Psicoemocional vía Redes Neuronales NLP</h2>
+        </div>
+
+        <div style="background: #f8fafc; border-radius: 12px; padding: 12px 18px; margin-bottom: 20px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; border: 1px solid #f1f5f9;">
+            <div style="font-size: 0.8rem;"><span style="color: #64748b;">Estudiante:</span> <strong style="color: #334155;">${estadoChat.nombreEstudiante}</strong></div>
+            <div style="font-size: 0.8rem;"><span style="color: #64748b;">Facultad:</span> <strong style="color: #334155;">${estadoChat.facultadSeleccionada}</strong></div>
+        </div>
+
+        <div style="background: #fffbeb; border: 1px solid #fde68a; padding: 16px; border-radius: 12px; margin-bottom: 24px; text-align: center;">
+            <p style="color: #92400e; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; margin: 0 0 6px 0; letter-spacing: 0.05em;">INDICADOR DE ALERTA PREDICTIVA</p>
+            <h3 style="color: #b45309; margin: 0; font-size: 1.25rem; font-weight: 800;">Estado ${estadoChat.nivelAlertaIA} (${estadoChat.nivelAlertaIA})</h3>
+        </div>
         
-        <div style="border-bottom: 2px solid #0f766e; padding-bottom: 16px; margin-bottom: 20px; display:flex; align-items:center; gap:14px;">
-            <div style="background:#0f766e; color:white; width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                <i data-lucide="clipboard-check" style="width:22px; height:22px;"></i>
-            </div>
+        <div style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px;">
             <div>
-                <h2 style="color: #0f766e; margin: 0; font-size: 1.2rem; font-weight: 700; letter-spacing: -0.025em; text-transform: uppercase;">Reporte de Bienestar Académico</h2>
-                <p style="color: #64748b; font-size: 0.78rem; margin: 2px 0 0 0; line-height: 1.2;">Evaluación Multidimensional (MBI-SS, GAD-7 y PSS-14)</p>
+                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 8px;">
+                    <span style="color: #475569; font-weight: 600;">Densidad de Ansiedad</span>
+                    <span style="color: #475569; font-weight: 700;">${p.ansiedad}%</span>
+                </div>
+                <div style="background: #f1f5f9; height: 8px; border-radius: 9999px; overflow: hidden;">
+                    <div style="background: #3b82f6; width: ${p.ansiedad}%; height: 100%; border-radius: 9999px; transition: width 0.6s ease;"></div>
+                </div>
+            </div>
+
+            <div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 8px;">
+                    <span style="color: #475569; font-weight: 600;">Densidad de Estrés</span>
+                    <span style="color: #475569; font-weight: 700;">${p.estres}%</span>
+                </div>
+                <div style="background: #f1f5f9; height: 8px; border-radius: 9999px; overflow: hidden;">
+                    <div style="background: #3b82f6; width: ${p.estres}%; height: 100%; border-radius: 9999px; transition: width 0.6s ease;"></div>
+                </div>
+            </div>
+
+            <div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 8px;">
+                    <span style="color: #475569; font-weight: 600;">Densidad de Burnout</span>
+                    <span style="color: #475569; font-weight: 700;">${burnoutScore}%</span>
+                </div>
+                <div style="background: #f1f5f9; height: 8px; border-radius: 9999px; overflow: hidden;">
+                    <div style="background: #3b82f6; width: ${burnoutScore}%; height: 100%; border-radius: 9999px; transition: width 0.6s ease;"></div>
+                </div>
             </div>
         </div>
 
-        <div style="background: #f8fafc; border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; border: 1px solid #f1f5f9;">
-            <table style="width: 100%; font-size: 0.85rem; border-collapse: collapse;">
-                <tr style="border-bottom: 1px solid #e2e8f0;">
-                    <td style="padding: 6px 0; color: #64748b; font-weight: 500; width: 35%;">Estudiante:</td>
-                    <td style="padding: 6px 0; font-weight: 600; color: #1e293b; text-align: right;">${estadoChat.nombreEstudiante}</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #e2e8f0;">
-                    <td style="padding: 6px 0; color: #64748b; font-weight: 500;">Edad / Sexo:</td>
-                    <td style="padding: 6px 0; font-weight: 600; color: #1e293b; text-align: right;">${estadoChat.edadEstudiante} años / ${estadoChat.sexoEstudiante}</td>
-                </tr>
-                <tr>
-                    <td style="padding: 6px 0; color: #64748b; font-weight: 500;">Facultad / Escuela:</td>
-                    <td style="padding: 6px 0; font-weight: 600; color: #1e293b; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px;">${estadoChat.facultadSeleccionada}</td>
-                </tr>
-            </table>
-        </div>
-
-        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-left: 5px solid ${colorAlerta}; padding: 16px; border-radius: 8px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <span style="font-weight: 700; color: #334155; font-size: 0.88rem; letter-spacing: -0.01em;">NIVEL DE RIESGO:</span>
-                <span style="background: ${colorAlerta}; color: white; padding: 4px 12px; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">
-                    ${estadoChat.nivelAlertaIA}
-                </span>
-            </div>
-            <p style="color: #475569; font-size: 0.85rem; line-height: 1.55; margin: 0; text-align: justify;">
-                <strong style="color: #1e293b;">Análisis Psicoeducativo:</strong> ${estadoChat.conclusionIA}
+        <div style="background: #ecfdf5; border: 1px solid #a7f3d0; padding: 16px; border-radius: 12px;">
+            <p style="color: #065f46; font-size: 0.85rem; line-height: 1.55; margin: 0; text-align: justify;">
+                <strong>Diagnóstico NLP Híbrido:</strong> ${estadoChat.conclusionIA}
             </p>
-        </div>
-
-        <h3 style="color: #0f766e; font-size: 0.95rem; font-weight: 700; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.03em;">Indicadores Psicoemocionales</h3>
-        
-        <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 24px;">
-            <div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 6px;">
-                    <span style="color: #475569; font-weight: 600;">Estrés Percibido (PSS)</span>
-                    <span style="color: ${getColorBarra(p.estres)}; font-weight: 700;">${p.estres}%</span>
-                </div>
-                <div style="background: #f1f5f9; height: 8px; border-radius: 9999px; overflow: hidden; border: 1px solid #e2e8f0;">
-                    <div style="background: ${getColorBarra(p.estres)}; width: ${p.estres}%; height: 100%; border-radius: 9999px; transition: width 0.6s ease;"></div>
-                </div>
-            </div>
-
-            <div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 6px;">
-                    <span style="color: #475569; font-weight: 600;">Ansiedad Generalizada (GAD)</span>
-                    <span style="color: ${getColorBarra(p.ansiedad)}; font-weight: 700;">${p.ansiedad}%</span>
-                </div>
-                <div style="background: #f1f5f9; height: 8px; border-radius: 9999px; overflow: hidden; border: 1px solid #e2e8f0;">
-                    <div style="background: ${getColorBarra(p.ansiedad)}; width: ${p.ansiedad}%; height: 100%; border-radius: 9999px; transition: width 0.6s ease;"></div>
-                </div>
-            </div>
-
-            <div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 6px;">
-                    <span style="color: #475569; font-weight: 600;">Agotamiento Emocional (MBI-SS D1)</span>
-                    <span style="color: ${getColorBarra(p.agotamiento)}; font-weight: 700;">${p.agotamiento}%</span>
-                </div>
-                <div style="background: #f1f5f9; height: 8px; border-radius: 9999px; overflow: hidden; border: 1px solid #e2e8f0;">
-                    <div style="background: ${getColorBarra(p.agotamiento)}; width: ${p.agotamiento}%; height: 100%; border-radius: 9999px; transition: width 0.6s ease;"></div>
-                </div>
-            </div>
-
-            <div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 6px;">
-                    <span style="color: #475569; font-weight: 600;">Cinismo / Desapego (MBI-SS D2)</span>
-                    <span style="color: ${getColorBarra(p.cinismo)}; font-weight: 700;">${p.cinismo}%</span>
-                </div>
-                <div style="background: #f1f5f9; height: 8px; border-radius: 9999px; overflow: hidden; border: 1px solid #e2e8f0;">
-                    <div style="background: ${getColorBarra(p.cinismo)}; width: ${p.cinismo}%; height: 100%; border-radius: 9999px; transition: width 0.6s ease;"></div>
-                </div>
-            </div>
-
-            <div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 6px;">
-                    <span style="color: #475569; font-weight: 600;">Eficacia Académica (MBI-SS D3)</span>
-                    <span style="color: ${getColorEficacia(p.eficacia)}; font-weight: 700;">${p.eficacia}%</span>
-                </div>
-                <div style="background: #f1f5f9; height: 8px; border-radius: 9999px; overflow: hidden; border: 1px solid #e2e8f0;">
-                    <div style="background: ${getColorEficacia(p.eficacia)}; width: ${p.eficacia}%; height: 100%; border-radius: 9999px; transition: width 0.6s ease;"></div>
-                </div>
-            </div>
-        </div>
-
-        <div style="border-top: 1px solid #f1f5f9; padding-top: 18px; display: flex; justify-content: center;">
-            <button onclick="modalSatisfaccion()" style="background: #0f766e; color: #ffffff; border: none; padding: 11px 22px; border-radius: 10px; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(15, 118, 110, 0.2);">
-                <i data-lucide="star" style="width:16px; height:16px;"></i>
-                Evaluar Experiencia del Chatbot
-            </button>
         </div>
     </div>`;
 
@@ -584,8 +528,13 @@ function generarReporteClinicoHtml() {
     if (box) {
         // En lugar de borrar la pantalla, agregamos el reporte de forma fluida como burbuja final del bot
         const reporteWrapper = document.createElement('div');
-        reporteWrapper.className = "message-wrapper bot w-full clear-both dynamic-message-fade";
-        reporteWrapper.innerHTML = html;
+        reporteWrapper.className = "message-wrapper bot";
+        reporteWrapper.innerHTML = `
+            <div class="avatar-icon"><i data-lucide="bot" style="width:16px;height:16px;"></i></div>
+            <div class="message-bubble" style="width: 100%; max-width: 550px; padding: 20px;">
+                ${html}
+            </div>
+        `;
         box.appendChild(reporteWrapper);
 
         // Hacemos un scroll suave para enfocar el reporte clínico
