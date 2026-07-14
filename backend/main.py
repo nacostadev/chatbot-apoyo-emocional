@@ -68,23 +68,24 @@ class TurnoInput(BaseModel):
     historial_preguntas_text: List[str]
 
 class DiagnosticoGuardar(BaseModel):
+    action: str
     Fecha: str
     Estudiante: str
     Edad: int
     Sexo: str
     Facultad: str
-    Score_Estres: float
-    Score_Ansiedad: float
-    Score_Agotamiento: float
-    Score_Cinismo: float
+    Score_Estres: float      
+    Score_Ansiedad: float   
+    Score_Agotamiento: float 
+    Score_Cinismo: float     
     Score_Eficacia: float
     Alerta: str
     Diagnostico: str
-    Rpta_Estres: str
-    Rpta_Ansiedad: str
-    Rpta_Agotamiento: str
-    Rpta_Cinismo: str
-    Rpta_Eficacia: str
+    Rpta_Estres: Optional[str] = ""
+    Rpta_Ansiedad: Optional[str] = ""
+    Rpta_Agotamiento: Optional[str] = ""
+    Rpta_Cinismo: Optional[str] = ""
+    Rpta_Eficacia: Optional[str] = ""
 
 class SatisfaccionGuardar(BaseModel):
     Fecha: str

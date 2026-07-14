@@ -1,4 +1,13 @@
 // ============================
+// URL BASE DEL BACKEND (única fuente de verdad)
+// Detecta automáticamente si estás en desarrollo local o en producción (Render),
+// para no volver a mezclar "localhost:8000" con la URL desplegada.
+// ============================
+const API_BASE_URL = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+    ? "http://localhost:8000"
+    : "https://chatbot-apoyo-emocional.onrender.com";
+
+// ============================
 // SISTEMA DE PESTAÑAS (Chatbot / Métricas)
 // ============================
 function activarTab(tabId) {
@@ -102,7 +111,7 @@ async function ejecutarFlujo() {
             if (estadoChat.indicePreguntaIA === 0 && !estadoChat.preguntaActualBot) {
                 controls.innerHTML = `<div style="text-align:center; color:#0d9488; font-size:0.8rem; font-weight:600;">⏳ Conectando...</div>`;
                 try {
-                    const response = await fetch("https://chatbot-apoyo-emocional.onrender.com/primera-pregunta"); const dataInit = await response.json();
+                    const response = await fetch(`${API_BASE_URL}/primera-pregunta`); const dataInit = await response.json();
                     estadoChat.preguntaActualBot = dataInit.pregunta;
                     estadoChat.categoriaActualBot = dataInit.categoria;
                     estadoChat.tipoPreguntaActualBot = dataInit.tipo;
@@ -187,7 +196,7 @@ async function avanzarTurnoAPI(valorEnviado) {
     const controls = document.getElementById('chat-controls');
     if (controls) controls.innerHTML = `<div style="text-align:center; color:#0d9488; font-size:0.8rem; font-weight:600;">⏳ Sincronizando flujo predictivo...</div>`;
 
-    const URL_BASE = "http://localhost:8000"; 
+    const URL_BASE = API_BASE_URL;
 
     try {
         const res = await fetch(`${URL_BASE}/procesar-turno`, {
@@ -201,13 +210,25 @@ async function avanzarTurnoAPI(valorEnviado) {
             })
         });
 
+        if (!res.ok) {
+            throw new Error(`Error en el servidor: Status ${res.status}`);
+        }
+
         const dataTurno = await res.json();
+
+        if (!dataTurno) {
+            throw new Error("El servidor devolvió una respuesta vacía.");
+        }
 
         if (dataTurno.finalizado) {
             estadoChat.pasoActual = 'reporte';
-            await procesarDiagnosticoFinalNLP();
+            try {
+                await procesarDiagnosticoFinalNLP();
+            } catch (diagError) {
+                console.error("Error dentro de procesarDiagnosticoFinalNLP:", diagError);
+                alert("El flujo terminó, pero hubo un problema al generar el reporte clínico.");
+            }
         } else {
-            // CORRECCIÓN DE MAPEO CLAVE: Recibe correctamente lo enviado por Python
             estadoChat.preguntaActualBot = dataTurno.pregunta_siguiente;
             estadoChat.categoriaActualBot = dataTurno.categoria_siguiente;
             estadoChat.tipoPreguntaActualBot = dataTurno.tipo_siguiente;
@@ -218,8 +239,66 @@ async function avanzarTurnoAPI(valorEnviado) {
             ejecutarFlujo();
         }
     } catch (error) {
-        console.error("Error en el turno del bot:", error);
-        alert("Error en el procesamiento del turno semántico con Localhost.");
+        console.error("❌ Error crítico en el turno del bot:", error);
+        alert(`No se pudo procesar el cierre del tamizaje. Detalles: ${error.message}`);
+
+        if (controls) {
+            controls.innerHTML = `
+                <div style="text-align:center; padding:10px;">
+                    <p style="color:#ef4444; font-size:0.8rem; margin-bottom:8px;">⚠️ Error de sincronización con el servidor local.</p>
+                    <button onclick="estadoChat.pasoActual='reporte'; ejecutarFlujo();" class="btn-primary" style="margin:0 auto; font-size:0.7rem; padding:6px 12px;">
+                        Intentar Cargar Reporte Local
+                    </button>
+                </div>
+            `;
+        }
+    }
+}
+
+async function guardarDiagnosticoEnSheets() {
+    try {
+        // Enviamos exactamente el esquema de 5 dimensiones que "main.py" requiere obligatoriamente
+        const payload = {
+            action: "guardar_diagnostico",
+            Fecha: new Date().toLocaleString("es-PE", { timeZone: "America/Lima" }),
+            Estudiante: estadoChat.nombreEstudiante,
+            Edad: parseInt(estadoChat.edadEstudiante) || 0,
+            Sexo: estadoChat.sexoEstudiante,
+            Facultad: estadoChat.facultadSeleccionada,
+            Score_Estres: parseFloat(estadoChat.puntajes.estres) || 0,
+            Score_Ansiedad: parseFloat(estadoChat.puntajes.ansiedad) || 0,
+            Score_Agotamiento: parseFloat(estadoChat.puntajes.agotamiento) || 0,
+            Score_Cinismo: parseFloat(estadoChat.puntajes.cinismo) || 0,
+            Score_Eficacia: parseFloat(estadoChat.puntajes.eficacia) || 0,
+            Alerta: estadoChat.nivelAlertaIA,
+            Diagnostico: estadoChat.conclusionIA,
+            Rpta_Estres: estadoChat.rptaEstres || "",
+            Rpta_Ansiedad: estadoChat.rptaAnsiedad || "",
+            Rpta_Agotamiento: estadoChat.rptaAgotamiento || "",
+            Rpta_Cinismo: estadoChat.rptaCinismo || "",
+            Rpta_Eficacia: estadoChat.rptaEficacia || ""
+        };
+
+        const res = await fetch(`${API_BASE_URL}/guardar-diagnostico`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+            const errText = await res.text();
+            throw new Error(`Error del servidor (${res.status}): ${errText}`);
+        }
+
+        const resultado = await res.json();
+        if (resultado.status === "error") {
+            console.error("❌ El backend reportó un error guardando el diagnóstico:", resultado.message);
+        } else {
+            console.log("✅ Diagnóstico registrado correctamente en Sheets.");
+        }
+    } catch (e) {
+        console.error("Error al guardar diagnóstico en Sheets:", e);
+        // NO HACEMOS "throw e" aquí para evitar que un fallo de red o Sheets congele la interfaz del usuario
     }
 }
 
@@ -227,19 +306,28 @@ async function procesarDiagnosticoFinalNLP() {
     const loadingId = mostrarMensajeCargaBot();
 
     try {
-        const res = await fetch("http://localhost:8000/diagnostico-final", {
+        // Convertimos todos los valores de respuesta a String para cumplir estrictamente con el backend de FastAPI
+        const respuestasString = estadoChat.respuestasValores.map(val => String(val));
+
+        const res = await fetch(`${API_BASE_URL}/diagnostico-final`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                respuestas_valores: estadoChat.respuestasValores,
+                respuestas_valores: respuestasString,
                 tipos_preguntas: estadoChat.tiposRespondidos,
                 categorias_respondidas: estadoChat.categoriasRespondidas
             })
         });
 
+        if (!res.ok) {
+            const errText = await res.text();
+            throw new Error(`Error en el cálculo (Status ${res.status}): ${errText}`);
+        }
+
         const diag = await res.json();
         eliminarMensajeCargaBot(loadingId);
 
+        // Guardamos los resultados en el estado global
         estadoChat.puntajes.estres = diag.estres;
         estadoChat.puntajes.ansiedad = diag.ansiedad;
         estadoChat.puntajes.agotamiento = diag.agotamiento;
@@ -249,32 +337,34 @@ async function procesarDiagnosticoFinalNLP() {
         estadoChat.nivelAlertaIA = diag.nivel_alerta;
         estadoChat.conclusionIA = diag.conclusion;
 
-        estadoChat.rptaEstres = diag.rpta_estres;
-        estadoChat.rptaAnsiedad = diag.rpta_ansiedad;
-        estadoChat.rptaAgotamiento = diag.rpta_agotamiento;
-        estadoChat.rptaCinismo = diag.rpta_cinismo;
-        estadoChat.rptaEficacia = diag.rpta_eficacia;
+        estadoChat.rptaEstres = diag.rpta_estres || "";
+        estadoChat.rptaAnsiedad = diag.rpta_ansiedad || "";
+        estadoChat.rptaAgotamiento = diag.rpta_agotamiento || "";
+        estadoChat.rptaCinismo = diag.rpta_cinismo || "";
+        estadoChat.rptaEficacia = diag.rpta_eficacia || "";
 
+        // 1. Renderizar el reporte clínico en pantalla de inmediato
         generarReporteClinicoHtml();
 
-        guardarDiagnosticoEnSheets();
-
+        // 2. Deshabilitar los controles de escritura de manera amigable
         const controls = document.getElementById('chat-controls');
         if (controls) {
             controls.innerHTML = `
-                <div style="text-align: center; color: #64748b; font-size: 0.85rem; padding: 12px; font-weight: 500;">
-                    🔒 Tamizaje finalizado y almacenado con éxito.
+                <div style="text-align: center; color: #0f766e; font-size: 0.85rem; padding: 12px; font-weight: 600;">
+                    🔒 Tamizaje finalizado y evaluado por Inteligencia Emocional.
                 </div>
             `;
         }
 
+        // 3. Registrar en Google Sheets en segundo plano (si falla, el reporte ya se muestra en pantalla)
+        guardarDiagnosticoEnSheets();
+
     } catch (error) {
-        console.error("Error al computar el diagnóstico de 5 dimensiones:", error);
+        console.error("❌ Error en procesarDiagnosticoFinalNLP:", error);
         eliminarMensajeCargaBot(loadingId);
-        alert("Ocurrió un error al procesar tu análisis. Por favor, reintenta.");
+        alert(`Ocurrió un error al procesar tu análisis final.\nDetalles: ${error.message}`);
     }
 }
-
 
 function agregarMesafeUsuarioFijo(texto) {
     const box = document.getElementById('chat-messages');
@@ -319,6 +409,30 @@ function procesarFacultad(fac) {
     agregarMesafeUsuarioFijo(`Pertenezco a la facultad de: ${fac}`);
     estadoChat.pasoActual = 'preguntas_ia';
     ejecutarFlujo();
+}
+
+function mostrarMensajeCargaBot() {
+    const box = document.getElementById('chat-messages');
+    if (!box) return null;
+
+    const id = 'loading-' + Date.now();
+    const indicador = document.createElement('div');
+    indicador.id = id;
+    indicador.className = "message-wrapper bot";
+    indicador.innerHTML = `
+        <div class="avatar-icon"><i data-lucide="bot" style="width:16px;height:16px;"></i></div>
+        <div class="message-bubble typing-bubble"><span></span><span></span><span></span></div>
+    `;
+    box.appendChild(indicador);
+    box.scrollTop = box.scrollHeight;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    return id;
+}
+
+function eliminarMensajeCargaBot(id) {
+    if (!id) return;
+    const el = document.getElementById(id);
+    if (el) el.remove();
 }
 
 function mostrarEfectoEscrituraBot(texto) {
@@ -459,7 +573,7 @@ function generarReporteClinicoHtml() {
         </div>
 
         <div style="border-top: 1px solid #f1f5f9; padding-top: 18px; display: flex; justify-content: center;">
-            <button onclick="abrirModalSatisfaccion()" style="background: #0f766e; color: #ffffff; border: none; padding: 11px 22px; border-radius: 10px; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(15, 118, 110, 0.2);">
+            <button onclick="modalSatisfaccion()" style="background: #0f766e; color: #ffffff; border: none; padding: 11px 22px; border-radius: 10px; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(15, 118, 110, 0.2);">
                 <i data-lucide="star" style="width:16px; height:16px;"></i>
                 Evaluar Experiencia del Chatbot
             </button>
@@ -473,7 +587,7 @@ function generarReporteClinicoHtml() {
         reporteWrapper.className = "message-wrapper bot w-full clear-both dynamic-message-fade";
         reporteWrapper.innerHTML = html;
         box.appendChild(reporteWrapper);
-        
+
         // Hacemos un scroll suave para enfocar el reporte clínico
         setTimeout(() => {
             box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
@@ -621,7 +735,7 @@ function actualizarIndicadoresVisuales() {
 
 function reiniciarChat() {
     document.getElementById('chat-messages').innerHTML = '';
-    estadoChat = { pasoActual: 'terminos', nombreEstudiante: '', facultadSeleccionada: '', indicePreguntaIA: 0, preguntaActualBot: '', categoriaActualBot: '', tipoPreguntaActualBot: '', respuestasValores: [], tiposRespondidos: [], categoriasRespondidas: [], puntajes: { estres: 0, ansiedad: 0, agotamiento: 0, cinismo : 0, eficacia : 0 }, conclusionIA: '', nivelAlertaIA: '', textoConsolidadoCompleto: '' };
+    estadoChat = { pasoActual: 'terminos', nombreEstudiante: '', facultadSeleccionada: '', indicePreguntaIA: 0, preguntaActualBot: '', categoriaActualBot: '', tipoPreguntaActualBot: '', respuestasValores: [], tiposRespondidos: [], categoriasRespondidas: [], puntajes: { estres: 0, ansiedad: 0, agotamiento: 0, cinismo: 0, eficacia: 0 }, conclusionIA: '', nivelAlertaIA: '', textoConsolidadoCompleto: '' };
     ejecutarFlujo();
 }
 
@@ -707,7 +821,7 @@ async function guardarResultadosEnBackend() {
             Rpta_Eficacia: estadoChat.rptaEficacia || ''
         };
 
-        const res = await fetch("https://chatbot-apoyo-emocional.onrender.com/guardar-diagnostico", {
+        const res = await fetch(`${API_BASE_URL}/guardar-diagnostico`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
@@ -751,7 +865,7 @@ async function enviarSatisfaccionSheets() {
         return;
     }
 
-    const URL_GUARDAR_SATISFACCION = "http://localhost:8000/guardar-satisfaccion";
+    const URL_GUARDAR_SATISFACCION = `${API_BASE_URL}/guardar-satisfaccion`;
     const comentario = document.getElementById("txtComentarioSatisfaccion").value.trim();
 
     const datosSatisfaccion = {
