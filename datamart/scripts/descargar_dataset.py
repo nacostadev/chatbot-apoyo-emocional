@@ -11,7 +11,7 @@ try:
     
     os.makedirs(os.path.join("datamart", "raw"), exist_ok=True)
     
-    ruta_guardado = os.path.join("datamart", "raw", "conversaciones_raw.json")
+    ruta_guardado = os.path.join("datamart", "raw", "conversaciones_raw.json") 
     
     df.to_json(ruta_guardado, orient="records", force_ascii=False, indent=4)
     
