@@ -35,69 +35,9 @@
     <link rel="stylesheet" href="../css/styles.css">
 </head>
 
-<body>
-
-    <div class="app-container" id="appContainer">
-
-        <header class="app-topbar" id="appTopbar">
-            <button type="button" class="btn-menu-toggle" id="btnMenuToggle" aria-label="Abrir menú">
-                <i data-lucide="menu"></i>
-            </button>
-            <div class="topbar-brand">
-                <div class="topbar-avatar">
-                    <i data-lucide="brain-circuit"></i>
-                </div>
-                <span>Sistema de Apoyo Emocional</span>
-            </div>
-        </header>
-
-        <div class="sidebar-overlay" id="sidebarOverlay"></div>
-
-        <div class="app-body">
-
-            <aside class="sidebar" id="sidebar">
-                <div class="sidebar-header">
-                    <div class="brand-wrapper">
-                        <div class="brand-icon bot-pulse">
-                            <i data-lucide="brain-circuit"></i>
-                        </div>
-                        <div class="brand-text">
-                            <h1>Sistema de Apoyo Emocional</h1>
-                            <p>Plataforma UCV</p>
-                        </div>
-                        <button type="button" class="btn-sidebar-close" id="btnSidebarClose" aria-label="Cerrar menú">
-                            <i data-lucide="x"></i>
-                        </button>
-                    </div>
-                    <div class="ods-badge">
-                        <p class="ods-title">ODS 3: Salud y Bienestar</p>
-                        <p class="ods-desc">Diagnóstico Psicoemocional</p>
-                    </div>
-                </div>
-
-                <nav class="sidebar-nav">
-                    <a href="../index.html" class="nav-item" style="text-decoration: none;">
-                        <i data-lucide="message-square-heart"></i>
-                        <span>Chatbot de Diagnóstico</span>
-                    </a>
-                    <a href="metricas.html" class="nav-item active" style="text-decoration: none;">
-                        <i data-lucide="bar-chart-3"></i>
-                        <span>Métricas del Proyecto</span>
-                    </a>
-                    <a href="ficha.html" class="nav-item" style="text-decoration: none;">
-                        <i data-lucide="clipboard-list"></i>
-                        <span>Ficha de Evaluación</span>
-                    </a>
-                </nav>
-
-                <div class="sidebar-footer">
-                    <p>Investigación Académica VII Ciclo</p>
-                    <p class="copyright">Universidad César Vallejo &copy; 2026</p>
-                </div>
-            </aside>
-
-            <!-- DASHBOARD DE MÉTRICAS -->
-            <section id="tab-dashboard" class="app-tab flex-1 overflow-y-auto p-6 md:p-8 space-y-8">
+<body class="view-page-body">
+    <div class="app-view-shell" style="display:flex; flex-direction:column;">
+        <section id="tab-dashboard" class="app-tab flex-1 overflow-y-auto p-6 md:p-8 space-y-8">
                 <div class="max-w-6xl mx-auto space-y-6">
                     <!-- Cabecera del Dashboard -->
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-5">
@@ -318,32 +258,10 @@
     <script src="../js/metricas.js"></script>
     <script>
         (function () {
-            const appContainer = document.getElementById('appContainer');
-            const btnMenuToggle = document.getElementById('btnMenuToggle');
-            const btnSidebarClose = document.getElementById('btnSidebarClose');
-            const sidebarOverlay = document.getElementById('sidebarOverlay');
-
-            function openSidebar() {
-                appContainer.classList.add('sidebar-open');
-            }
-
-            function closeSidebar() {
-                appContainer.classList.remove('sidebar-open');
-            }
-
-            btnMenuToggle.addEventListener('click', openSidebar);
-            btnSidebarClose.addEventListener('click', closeSidebar);
-            sidebarOverlay.addEventListener('click', closeSidebar);
-
-            document.querySelectorAll('.sidebar .nav-item').forEach(function (item) {
-                item.addEventListener('click', closeSidebar);
-            });
-
             if (window.lucide) {
                 lucide.createIcons();
             }
 
-            // Al cargar esta página, se traen las métricas reales del Sheet
             if (typeof cargarMetricasDashboard === 'function') {
                 cargarMetricasDashboard();
             }
