@@ -3,6 +3,7 @@ import requests
 URL_GOOGLE_SHEETS = "https://script.google.com/macros/s/AKfycbyNvBPLmDZrNtckkSqJMk4qi79AR9zJSZ16IE3jAKVhPEZncIPs7iD4IcYthjqUGVc1/exec"
 
 
+
 def enviar_a_sheets(datos: dict) -> dict:
     """
     Envía datos al Apps Script (doPost) para que los guarde en el Google Sheet.

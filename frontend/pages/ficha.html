@@ -21,103 +21,52 @@
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-        
+
+        :root {
+            --surface-bg: #f8fafc;
+            --surface-card: #ffffff;
+            --border-soft: rgba(226, 232, 240, 0.9);
+            --text-strong: #0f172a;
+            --text-muted: #64748b;
+            --accent: #0f766e;
+        }
+
         body {
-            background-color: #F8FAFC;
+            background-color: var(--surface-bg);
+            color: var(--text-strong);
             -webkit-font-smoothing: antialiased;
         }
 
-        /* Estilos de navegación originales */
-        .sidebar-nav {
-            display: flex;
-            flex-direction: column;
-            gap: 0.375rem;
-            margin-top: 0.5rem;
-        }
-        
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem 1rem;
-            border-radius: 0.75rem;
-            color: #94a3b8;
-            font-size: 0.875rem;
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-        
-        .nav-item:hover {
-            background-color: rgba(30, 41, 59, 0.5);
-            color: #f8fafc;
-        }
-        
-        .nav-item.active {
-            background-color: #1e293b;
-            color: #2dd4bf;
-            border: 1px solid rgba(51, 65, 85, 0.5);
-            font-weight: 700;
-            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
-        }
-
-        .nav-item svg {
-            width: 1.25rem;
-            height: 1.25rem;
-        }
-
         .bento-card {
-            background: #ffffff;
+            background: var(--surface-card);
             border-radius: 1.25rem;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
-            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+            border: 1px solid var(--border-soft);
             display: flex;
             flex-direction: column;
             overflow: hidden;
             position: relative;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+
+        .bento-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
+            border-color: rgba(15, 118, 110, 0.28);
+        }
+
+        .bento-card a {
+            transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .bento-card a:hover {
+            transform: translateY(-1px);
+            color: var(--accent);
+            background-color: rgba(15, 118, 110, 0.08);
         }
     </style>
 </head>
-<body class="text-slate-800 h-screen w-full overflow-hidden flex">
-
-    <aside class="w-[260px] bg-[#0F172A] text-slate-300 hidden md:flex flex-col justify-between h-full flex-shrink-0 z-20">
-        <div class="p-6 flex flex-col gap-6">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center shrink-0">
-                    <i data-lucide="brain-circuit" class="w-6 h-6"></i>
-                </div>
-                <div>
-                    <h1 class="text-white font-bold text-sm leading-tight">Sistema de Apoyo<br>Emocional</h1>
-                    <p class="text-[10px] text-slate-400 mt-0.5">Plataforma UCV</p>
-                </div>
-            </div>
-
-            <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
-                <p class="text-[9px] font-bold text-teal-400 tracking-wide uppercase mb-1">ODS 3: SALUD Y BIENESTAR</p>
-                <p class="text-xs font-medium text-slate-300">Diagnóstico Psicoemocional</p>
-            </div>
-
-            <nav class="sidebar-nav">
-                <a href="../index.html" class="nav-item" style="text-decoration: none;">
-                    <i data-lucide="message-square-heart"></i>
-                    <span>Chatbot de Diagnóstico</span>
-                </a>
-                <a href="metricas.html" class="nav-item" style="text-decoration: none;">
-                    <i data-lucide="bar-chart-3"></i>
-                    <span>Métricas del Proyecto</span>
-                </a>
-                <a href="ficha.html" class="nav-item active" style="text-decoration: none;">
-                    <i data-lucide="users-round"></i>
-                    <span>Ficha e Investigadores</span>
-                </a>
-            </nav>
-        </div>
-
-        <div class="p-6 text-xs text-slate-500 font-medium">
-            <p class="mb-1">Investigación Académica VII Ciclo</p>
-            <p>Universidad César Vallejo &copy; 2026</p>
-        </div>
-    </aside>
-
+<body class="text-slate-800 h-screen w-full overflow-hidden flex view-page-body">
     <main class="flex-1 h-full p-5 lg:p-8 pb-3 flex flex-col min-w-0">
         
         <div class="grid grid-cols-3 grid-rows-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1.5fr)] gap-5 h-full max-w-[1200px] mx-auto w-full">
