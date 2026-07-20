@@ -380,7 +380,7 @@ function mostrarEfectoEscrituraBot(texto) {
     });
 }
 
-let recursosModalActual = { video1: '', video2: '', consejo: '' };
+let recursosModalActual = { titulo: '', video1: '', consejo: '' };
 
 function generarReporteClinicoHtml() {
     const p = estadoChat.puntajes;
@@ -506,7 +506,31 @@ function generarReporteClinicoHtml() {
 }
 
 function seleccionarOpcionCierre(opcion) {
-    if (opcion === 'informarse') { abrirModalPsicoeducativo(); }
+    if (opcion === 'informarse') { 
+        // 1. Obtener la dimensión de mayor riesgo basándonos en los puntajes
+        const p = estadoChat.puntajes;
+        const riesgos = [
+            { dimension: 'estres', valor: p.estres, riesgo: p.estres },
+            { dimension: 'ansiedad', valor: p.ansiedad, riesgo: p.ansiedad },
+            { dimension: 'agotamiento', valor: p.agotamiento, riesgo: p.agotamiento },
+            { dimension: 'cinismo', valor: p.cinismo, riesgo: p.cinismo },
+            // Para eficacia, un valor bajo indica mayor riesgo
+            { dimension: 'eficacia', valor: p.eficacia, riesgo: 100 - p.eficacia }
+        ];
+        
+        // Ordenamos de mayor a menor riesgo
+        riesgos.sort((a, b) => b.riesgo - a.riesgo);
+        const dimensionPrincipal = riesgos[0];
+
+        // 2. Invocar la nueva función de recursos.js (debe estar cargado antes en el HTML)
+        if (typeof obtenerRecursoPsicoeducativo === 'function') {
+            recursosModalActual = obtenerRecursoPsicoeducativo(dimensionPrincipal.dimension, dimensionPrincipal.valor);
+        } else {
+            console.error("El módulo recursos.js no está cargado correctamente.");
+        }
+
+        abrirModalPsicoeducativo(); 
+    }
     else if (opcion === 'apoyo') { inyectarCanalesApoyoWsp(); }
 }
 
