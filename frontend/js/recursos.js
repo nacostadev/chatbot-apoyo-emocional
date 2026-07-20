@@ -1,130 +1,110 @@
 const recursosPorDimensionYNivel = {
     estres: {
-        Bajo: { 
-            titulo: "Manejo del Estrés Leve", 
-            video1: "https://www.youtube.com/embed/82ZJz8-lBbs", // Respiración guiada
-            consejo: "Tus niveles de estrés son bajos. Sigue manteniendo tus buenos hábitos y realizando actividades relajantes." 
+        Bajo: {
+            titulo: "Técnicas para manejar el estrés",
+            video1: "https://www.youtube.com/embed/RC5o36ErgCA",
+            consejo: "Mantén una rutina de sueño de 7-8 horas y bloques de descanso entre sesiones de estudio."
         },
-        Moderado: { 
-            titulo: "Estrategias para el Estrés Moderado", 
-            video1: "https://www.youtube.com/embed/T6cb-x40jR0", // Mindfulness para el estrés
-            consejo: "Se observan niveles de estrés que requieren atención. Toma pausas activas, organiza tu tiempo y practica respiración profunda." 
+        Moderado: {
+            titulo: "6 ejercicios respiratorios para estrés y ansiedad",
+            video1: "https://www.youtube.com/embed/G-72baPOkoQ",
+            consejo: "Practica respiración 4-7-8 antes de estudiar o rendir examen y usa la técnica Pomodoro (25 min estudio / 5 min descanso)."
         },
-        Alto: { 
-            titulo: "Intervención en Estrés Alto", 
-            video1: "https://www.youtube.com/embed/vKx2X8_0E_8", // Manejo de estrés agudo
-            consejo: "Tus niveles de estrés son altos. Es fundamental buscar apoyo, delegar tareas y priorizar tu descanso físico y mental." 
+        Alto: {
+            titulo: "10 señales de estrés crónico",
+            video1: "https://www.youtube.com/embed/T675hI6AMv4",
+            consejo: "Si notas fatiga persistente, insomnio o irritabilidad constante, es momento de acudir a Psicología UCV."
         }
     },
     ansiedad: {
-        Bajo: { 
-            titulo: "Bienestar y Calma", 
-            video1: "https://www.youtube.com/embed/zO3Ge2XoHgc", // Técnicas para relajarse
-            consejo: "Tienes un buen manejo de la ansiedad. Continúa con tus estrategias actuales y mantén el equilibrio." 
+        Bajo: {
+            titulo: "Ejercicio de respiración para ansiedad y estrés (5 min)",
+            video1: "https://www.youtube.com/embed/0mXT7lc-la0",
+            consejo: "Identifica y anota tus pensamientos anticipatorios; escribirlos reduce su intensidad."
         },
-        Moderado: { 
-            titulo: "Manejo de Ansiedad Moderada", 
-            video1: "https://www.youtube.com/embed/p9jE2KzH3kE", // Ansiedad explicada
-            consejo: "Podrías estar experimentando preocupación constante. Intenta técnicas de mindfulness y evita el exceso de cafeína." 
+        Moderado: {
+            titulo: "Alivia la ansiedad con este ejercicio de respiración",
+            video1: "https://www.youtube.com/embed/tA2kT8eSjtg",
+            consejo: "Practica respiración diafragmática 3 veces al día y grounding 5-4-3-2-1 en momentos de pico."
         },
-        Alto: { 
-            titulo: "Atención a la Ansiedad Alta", 
-            video1: "https://www.youtube.com/embed/ZToicYcHIOU", // Qué hacer en crisis de ansiedad
-            consejo: "La ansiedad está afectando tu bienestar. Te sugerimos fuertemente contactar al servicio de psicología para obtener herramientas especializadas." 
+        Alto: {
+            titulo: "Cómo superar la ansiedad: respiración diafragmática",
+            video1: "https://www.youtube.com/embed/bO_oXpUf3rM",
+            consejo: "Si la ansiedad interfiere con tu vida diaria (dormir, comer, socializar), busca apoyo profesional cuanto antes."
         }
     },
     agotamiento: {
-        Bajo: { 
-            titulo: "Energía y Vitalidad", 
-            video1: "https://www.youtube.com/embed/e21Q2qR4oK4", // Importancia del descanso
-            consejo: "Muestras niveles óptimos de energía. Asegúrate de seguir durmiendo tus 7-8 horas diarias." 
+        Bajo: {
+            titulo: "Burnout académico: señales tempranas",
+            video1: "https://www.youtube.com/embed/Z3vXqubKc8s",
+            consejo: "Reserva tiempo semanal para actividades que disfrutes fuera del estudio; es prevención, no pérdida de tiempo."
         },
-        Moderado: { 
-            titulo: "Previniendo el Agotamiento", 
-            video1: "https://www.youtube.com/embed/Q4M8OqQc3B8", // Burnout estudiantil
-            consejo: "Estás en riesgo de fatiga crónica. Intercala periodos de estudio con descanso real y desconexión digital." 
+        Moderado: {
+            titulo: "¡No te quemes! Burnout académico y laboral",
+            video1: "https://www.youtube.com/embed/jYUQiuWHTNM",
+            consejo: "Aprende a decir 'no' a tareas extra y aplica microdescansos cada 90 minutos de estudio."
         },
-        Alto: { 
-            titulo: "Recuperación del Agotamiento Severo", 
-            video1: "https://www.youtube.com/embed/t4bZ_oR_Y6c", // Recuperarse del Burnout
-            consejo: "Presentas signos de burnout. Necesitas una pausa inmediata y considerar reajustar tu carga académica." 
+        Alto: {
+            titulo: "Si te pasa esto... necesitas ayuda psicológica",
+            video1: "https://www.youtube.com/embed/2Bs5nvAIfq4",
+            consejo: "El agotamiento crónico puede derivar en abandono académico; busca acompañamiento profesional y evalúa reducir temporalmente tu carga de cursos."
         }
     },
     cinismo: {
-        Bajo: { 
-            titulo: "Compromiso Académico", 
-            video1: "https://www.youtube.com/embed/WJq5r41y2nI", // Motivación
-            consejo: "Mantienes una actitud positiva y comprometida con tus estudios." 
+        Bajo: {
+            titulo: "Motivación para estudiantes: motivos para estudiar",
+            video1: "https://www.youtube.com/embed/BTRFiiYGyV0",
+            consejo: "Recuerda periódicamente el 'para qué' de tu carrera; reconectar con tu propósito previene el desapego."
         },
-        Moderado: { 
-            titulo: "Reconectando con tu Propósito", 
-            video1: "https://www.youtube.com/embed/d3W47xQ-99s", // Encontrar propósito
-            consejo: "Si sientes apatía, busca reconectar con las razones por las que elegiste tu carrera e interactúa con compañeros." 
+        Moderado: {
+            titulo: "7 tips para recuperar la motivación",
+            video1: "https://www.youtube.com/embed/GjnGriqVqOU",
+            consejo: "Retoma contacto con compañeros de estudio; el aislamiento alimenta el cinismo, la conexión social lo revierte."
         },
-        Alto: { 
-            titulo: "Afrontando el Desapego Alto", 
-            video1: "https://www.youtube.com/embed/vU-BmsaQjX8", // Superar apatía
-            consejo: "El alto nivel de cinismo indica una desconexión profunda. Hablar con un consejero vocacional te será de gran ayuda." 
+        Alto: {
+            titulo: "¿Vas a rendirte? La mejor motivación",
+            video1: "https://www.youtube.com/embed/_zmDAFZV6fk",
+            consejo: "El desapego sostenido suele ser una defensa ante el agotamiento acumulado; trabájalo con acompañamiento psicológico."
         }
     },
     eficacia: {
-        Alto: { 
-            titulo: "Eficacia Académica Alta", 
-            video1: "https://www.youtube.com/embed/L1WbQ28-qEo", // Hábitos de éxito
-            consejo: "¡Excelente! Confías en tus capacidades y logras tus objetivos académicos. Sigue así." 
+        Bajo: {
+            titulo: "Querido estudiante: la mejor motivación",
+            video1: "https://www.youtube.com/embed/rVAQBnSogso",
+            consejo: "Divide tus metas grandes en objetivos pequeños y alcanzables; cada logro reconstruye tu confianza."
         },
-        Moderado: { 
-            titulo: "Mejorando tu Eficacia", 
-            video1: "https://www.youtube.com/embed/7VpDOPP3y0U", // Como organizar el tiempo
-            consejo: "Establece metas más pequeñas y alcanzables para ir construyendo mayor confianza en tus habilidades." 
+        Moderado: {
+            titulo: "Estrategias para mejorar el rendimiento académico",
+            video1: "https://www.youtube.com/embed/QwQUmrUtxrM",
+            consejo: "Usa técnicas de estudio activo (mapas mentales, explicar en voz alta lo aprendido) y súmate a un grupo de estudio."
         },
-        Bajo: { 
-            titulo: "Potenciando tu Eficacia Baja", 
-            video1: "https://www.youtube.com/embed/fWTaE04Bv6Q", // Superar el síndrome del impostor
-            consejo: "Es posible que dudes de ti mismo. Revisa tus métodos de estudio con un tutor o acude a talleres académicos." 
+        Alto: {
+            titulo: "La mejor motivación para estudiar y exámenes",
+            video1: "https://www.youtube.com/embed/VIV_5rCmcL8",
+            consejo: "Sigue así: comparte tus estrategias con compañeros, eso refuerza tu propia autoeficacia."
         }
     }
 };
 
-/**
- * Clasifica el nivel (Alto, Moderado, Bajo) de una dimensión específica basado en su puntaje.
- * 
- * @param {string} dimension - La dimensión a evaluar ('estres', 'ansiedad', 'agotamiento', 'cinismo', 'eficacia')
- * @param {number} valor - El puntaje obtenido (0-100)
- * @returns {string} Nivel clasificado
- */
 function clasificarNivel(dimension, valor) {
     if (dimension === 'eficacia') {
-        if (valor > 70) return 'Alto';
-        if (valor >= 40) return 'Moderado';
-        return 'Bajo';
+        if (valor < 40) return 'Bajo';
+        if (valor < 70) return 'Moderado';
+        return 'Alto';
     } else {
-        if (valor > 70) return 'Alto';
-        if (valor > 35) return 'Moderado';
-        return 'Bajo';
+        if (valor <= 35) return 'Bajo';
+        if (valor <= 70) return 'Moderado';
+        return 'Alto';
     }
 }
 
-/**
- * Retorna un objeto estructurado con título, video y consejo 
- * apropiados para la dimensión y puntaje dados.
- * 
- * @param {string} dimension - La dimensión ('estres', 'ansiedad', etc.)
- * @param {number} valor - El puntaje de dicha dimensión
- * @returns {Object} Objeto con { titulo, video1, consejo }
- */
-function obtenerRecursoPsicoeducativo(dimension, valor) {
+
+function setRecursoPsicoeducativo(dimension, valor) {
     const nivel = clasificarNivel(dimension, valor);
-    const recursosDimension = recursosPorDimensionYNivel[dimension];
-    
-    if (recursosDimension && recursosDimension[nivel]) {
-        return recursosDimension[nivel];
-    }
-    
-    // Fallback por defecto si los datos no coinciden
-    return {
-        titulo: "Recursos de Apoyo Emocional",
-        video1: "https://www.youtube.com/embed/tgbNymZ7vqY",
-        consejo: "Recuerda que tu bienestar emocional es prioridad. Siempre es válido pedir ayuda."
+    const recurso = recursosPorDimensionYNivel[dimension][nivel];
+    recursosModalActual = {
+        titulo: recurso.titulo,
+        video1: recurso.video1,
+        consejo: recurso.consejo
     };
 }

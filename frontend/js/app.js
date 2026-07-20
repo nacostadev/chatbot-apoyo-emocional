@@ -523,8 +523,8 @@ function seleccionarOpcionCierre(opcion) {
         const dimensionPrincipal = riesgos[0];
 
         // 2. Invocar la nueva función de recursos.js (debe estar cargado antes en el HTML)
-        if (typeof obtenerRecursoPsicoeducativo === 'function') {
-            recursosModalActual = obtenerRecursoPsicoeducativo(dimensionPrincipal.dimension, dimensionPrincipal.valor);
+        if (typeof setRecursoPsicoeducativo === 'function') {
+            setRecursoPsicoeducativo(dimensionPrincipal.dimension, dimensionPrincipal.valor);
         } else {
             console.error("El módulo recursos.js no está cargado correctamente.");
         }
